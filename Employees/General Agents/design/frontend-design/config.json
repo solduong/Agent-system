@@ -1,0 +1,9 @@
+{
+  "name": "frontend-design",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Designs and produces frontend UI — HTML/CSS layouts, component structure, visual hierarchy, and responsive design from a brief or requirements",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

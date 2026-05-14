@@ -1,0 +1,9 @@
+{
+  "name": "docx",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Creates, reads, and edits Word documents (.docx) — generates structured documents with headings, tables, lists, and formatting from provided content",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

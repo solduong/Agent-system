@@ -1,0 +1,9 @@
+{
+  "name": "section_writer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Writes one or more report sections at academic level using chunk files, a content brief, tables, and a reference library — section names and structure are specified at runtime",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

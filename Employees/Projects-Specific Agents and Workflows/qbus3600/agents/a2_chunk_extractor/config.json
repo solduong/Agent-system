@@ -1,0 +1,9 @@
+{
+  "name": "a2_chunk_extractor",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Phase 2: Extracts notebook findings into four chunk files (preprocessing, descriptive, relationships, business signals)",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

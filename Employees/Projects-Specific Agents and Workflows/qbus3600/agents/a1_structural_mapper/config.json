@@ -1,0 +1,9 @@
+{
+  "name": "a1_structural_mapper",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Phase 1: Maps Jupyter notebook structure — cell ranges, variables, tests, plots, and agent tags",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

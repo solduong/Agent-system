@@ -1,0 +1,33 @@
+{
+  "id": "asset_allocation",
+  "name": "Asset Allocation Brief — Risk, Return & Liquidity Analysis",
+  "description": "Produces a higher-level strategic brief on asset allocation across multiple asset classes, considering risk-return trade-offs, liquidity constraints, and portfolio construction principles.",
+  "version": "1.0",
+  "workflow": "asset_allocation_brief_pipeline",
+  "available_workflows": [
+    "asset_allocation_brief_pipeline"
+  ],
+  "extends": [],
+  "context": {
+    "discipline": "Finance / Investment Management",
+    "brief_type": "strategic_overview",
+    "input_files": {
+      "task_description": "TO_BE_PROVIDED",
+      "marking_rubric": "TO_BE_PROVIDED",
+      "asset_class_data": "TO_BE_PROVIDED"
+    },
+    "output_dir": "TO_BE_PROVIDED",
+    "asset_classes": [],
+    "considerations": [
+      "risk (volatility, drawdown, tail risk)",
+      "expected returns (historical, forward-looking)",
+      "liquidity (bid-ask, redemption, market depth)",
+      "correlation structure",
+      "diversification benefit"
+    ],
+    "document": {
+      "citation_style": "APA 7th",
+      "format": "docx"
+    }
+  }
+}

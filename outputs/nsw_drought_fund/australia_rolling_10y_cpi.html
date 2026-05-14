@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #ffffff; color: #1a1a2e; }
+  h2 { font-size: 16px; font-weight: 700; margin: 0 0 4px 0; color: #1a1a2e; }
+  p.sub { font-size: 12px; color: #666; margin: 0 0 14px 0; }
+  .chart-wrap { position: relative; height: 400px; }
+  .annotations { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .ann { font-size: 11px; color: #444; background: #f7f7f7; border-radius: 4px; padding: 5px 10px; border-left: 3px solid #ccc; }
+  .ann.era1 { border-color: #e74c3c; }
+  .ann.era2 { border-color: #e67e22; }
+  .ann.era3 { border-color: #27ae60; }
+  .ann.era4 { border-color: #2980b9; }
+  .ann.era5 { border-color: #8e44ad; }
+  .legend-row { display: flex; gap: 20px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #444; }
+  .leg-line { width: 24px; height: 3px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<h2>Australia CPI: Annual Rate &amp; Rolling 10-Year Average (1975–2026)</h2>
+<p class="sub">Source: ABS / RBA historical series. Rolling 10Y average shown from 1984 onwards (requires 10 prior years of data).</p>
+
+<div class="legend-row">
+  <div class="leg-item">
+    <div class="leg-line" style="background:#b0bec5;height:1px;"></div>
+    <span>Annual CPI %</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-line" style="background:#1565c0;height:3px;"></div>
+    <span>Rolling 10Y Average</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-line" style="background:transparent; border-top:2px dashed rgba(229,57,53,0.7);height:0;"></div>
+    <span>RBA Target Band (2–3%)</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-line" style="background:transparent; border-top:2px dashed #ff6f00;height:0;"></div>
+    <span>Team CPI Forecast (2.5%)</span>
+  </div>
+</div>
+
+<div class="chart-wrap">
+  <canvas id="cpiChart"></canvas>
+</div>
+
+<div class="annotations">
+  <div class="ann era1">🔴 <strong>1975–1982:</strong> Oil shocks &amp; wage indexation — avg ~10.9%</div>
+  <div class="ann era2">🟠 <strong>1983–1992:</strong> Accord &amp; disinflation — avg ~6.7%</div>
+  <div class="ann era3">🟢 <strong>1993–2007:</strong> RBA inflation targeting era — avg ~2.7%</div>
+  <div class="ann era4">🔵 <strong>2008–2020:</strong> GFC + QE &amp; low inflation — avg ~2.2%</div>
+  <div class="ann era5">🟣 <strong>2021–2026:</strong> Post-COVID energy crisis surge — avg ~4.4%</div>
+</div>
+
+<script>
+const data = [
+  {year:1975,cpi:15.1},{year:1976,cpi:13.5},{year:1977,cpi:12.3},{year:1978,cpi:7.9},
+  {year:1979,cpi:9.1},{year:1980,cpi:10.2},{year:1981,cpi:9.7},{year:1982,cpi:11.1},
+  {year:1983,cpi:10.1},{year:1984,cpi:4.0},{year:1985,cpi:6.7},{year:1986,cpi:9.1},
+  {year:1987,cpi:8.5},{year:1988,cpi:7.3},{year:1989,cpi:7.5},{year:1990,cpi:7.3},
+  {year:1991,cpi:3.2},{year:1992,cpi:1.0},{year:1993,cpi:1.8},{year:1994,cpi:1.9},
+  {year:1995,cpi:4.6},{year:1996,cpi:2.6},{year:1997,cpi:0.3},{year:1998,cpi:0.9},
+  {year:1999,cpi:1.5},{year:2000,cpi:4.5},{year:2001,cpi:4.4},{year:2002,cpi:3.0},
+  {year:2003,cpi:2.8},{year:2004,cpi:2.3},{year:2005,cpi:2.7},{year:2006,cpi:3.5},
+  {year:2007,cpi:2.3},{year:2008,cpi:4.4},{year:2009,cpi:1.8},{year:2010,cpi:2.9},
+  {year:2011,cpi:3.3},{year:2012,cpi:1.8},{year:2013,cpi:2.4},{year:2014,cpi:2.5},
+  {year:2015,cpi:1.5},{year:2016,cpi:1.3},{year:2017,cpi:1.9},{year:2018,cpi:1.9},
+  {year:2019,cpi:1.6},{year:2020,cpi:0.9},{year:2021,cpi:2.9},{year:2022,cpi:6.6},
+  {year:2023,cpi:5.4},{year:2024,cpi:3.2},{year:2025,cpi:3.8},{year:2026,cpi:4.6}
+];
+
+const years = data.map(d => d.year);
+const cpiValues = data.map(d => d.cpi);
+
+const rolling10 = data.map((d, i) => {
+  if (i < 9) return null;
+  const slice = data.slice(i - 9, i + 1).map(x => x.cpi);
+  return Math.round(slice.reduce((a,b) => a+b, 0) / slice.length * 100) / 100;
+});
+
+const eraPlugin = {
+  id: 'eraZones',
+  beforeDraw(chart) {
+    const {ctx, chartArea, scales} = chart;
+    if (!chartArea) return;
+    const xScale = scales.x;
+    const zones = [
+      {from:1975, to:1982.5, color:'rgba(231,76,60,0.06)'},
+      {from:1982.5, to:1992.5, color:'rgba(230,126,34,0.06)'},
+      {from:1992.5, to:2007.5, color:'rgba(39,174,96,0.06)'},
+      {from:2007.5, to:2020.5, color:'rgba(41,128,185,0.06)'},
+      {from:2020.5, to:2026.5, color:'rgba(142,68,173,0.08)'},
+    ];
+    zones.forEach(z => {
+      const x1 = xScale.getPixelForValue(z.from);
+      const x2 = xScale.getPixelForValue(z.to);
+      ctx.fillStyle = z.color;
+      ctx.fillRect(x1, chartArea.top, x2 - x1, chartArea.height);
+    });
+  }
+};
+
+const ctx = document.getElementById('cpiChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  plugins: [eraPlugin],
+  data: {
+    labels: years,
+    datasets: [
+      {
+        label: 'Annual CPI %',
+        data: cpiValues,
+        borderColor: 'rgba(176,190,197,1)',
+        backgroundColor: 'rgba(176,190,197,0.12)',
+        borderWidth: 1.2,
+        pointRadius: 2.5,
+        pointHoverRadius: 5,
+        tension: 0.3,
+        fill: true,
+        order: 3,
+      },
+      {
+        label: 'Rolling 10Y Average',
+        data: rolling10,
+        borderColor: '#1565c0',
+        backgroundColor: 'transparent',
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0.4,
+        order: 1,
+      },
+      {
+        label: 'RBA Target Top (3%)',
+        data: years.map(() => 3),
+        borderColor: 'rgba(229,57,53,0.6)',
+        borderDash: [6,4],
+        borderWidth: 1.3,
+        pointRadius: 0,
+        fill: '+1',
+        backgroundColor: 'rgba(229,57,53,0.05)',
+        order: 4,
+      },
+      {
+        label: 'RBA Target Bottom (2%)',
+        data: years.map(() => 2),
+        borderColor: 'rgba(229,57,53,0.6)',
+        borderDash: [6,4],
+        borderWidth: 1.3,
+        pointRadius: 0,
+        fill: false,
+        order: 4,
+      },
+      {
+        label: 'Team CPI Forecast (2.5%)',
+        data: years.map(() => 2.5),
+        borderColor: 'rgba(255,111,0,0.9)',
+        borderDash: [10,5],
+        borderWidth: 2.2,
+        pointRadius: 0,
+        fill: false,
+        order: 2,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {mode:'index', intersect:false},
+    plugins: {
+      legend: {display: false},
+      tooltip: {
+        callbacks: {
+          label: ctx => ctx.raw === null ? null : `${ctx.dataset.label}: ${ctx.raw}%`
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear',
+        min: 1975,
+        max: 2026,
+        ticks: {
+          stepSize: 5,
+          callback: v => v,
+          font: {size: 10}
+        },
+        grid: {color: 'rgba(0,0,0,0.05)'},
+        title: {display: true, text: 'Year', font: {size: 11}}
+      },
+      y: {
+        min: -1,
+        max: 18,
+        ticks: {
+          callback: v => v + '%',
+          font: {size: 10}
+        },
+        grid: {color: 'rgba(0,0,0,0.05)'},
+        title: {display: true, text: 'CPI Annual Rate (%)', font: {size: 11}}
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

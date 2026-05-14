@@ -1,0 +1,13 @@
+name: content_production
+description: "Workflow for content_production"
+version: "1.0"
+
+steps:
+  - name: step_1
+    agent: data_analyzer
+    task: "Analyze data"
+    input_keys: []
+    output_key: results
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300

@@ -1,0 +1,9 @@
+{
+  "name": "workflow_planner",
+  "model": "claude-sonnet-4-5",
+  "system_prompt": "system_prompt.md",
+  "description": "Formalises a structured step plan into a valid, executable workflow YAML file — validates agent names against the roster and input/output key chains before writing; does not decide which agents to use (that is the manager's role)",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Write"]
+}

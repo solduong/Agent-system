@@ -1,0 +1,9 @@
+{
+  "name": "prompt_engineer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Designs system prompts and config for new agents based on a task description",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read", "Write"]
+}

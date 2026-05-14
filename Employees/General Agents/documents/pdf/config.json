@@ -1,0 +1,9 @@
+{
+  "name": "pdf",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Creates and manipulates PDF files — merge, split, add watermarks, fill forms, encrypt, and convert content to PDF format",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

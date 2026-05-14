@@ -1,0 +1,62 @@
+{
+  "id": "honours_payout",
+  "name": "Honours Thesis — Optimal Payout Policy under Discrete Credit-Rating, Cash-Floor and Capital-Structure Constraints",
+  "description": "USYD Discipline of Finance honours thesis project. Builds and tests a discrete-time dynamic payout model with a hard credit-rating constraint, cash floor, and target leverage band, then runs a reduced-form replication on Compustat × S&P-rated U.S. firms.",
+  "version": "1.0",
+  "workflow": "proposal_planning_pipeline",
+  "available_workflows": [
+    "proposal_planning_pipeline"
+  ],
+  "extends": [],
+  "context": {
+    "discipline": "Finance",
+    "academic_level": "Honours (USYD)",
+    "academic_year": "2026",
+    "supervisor": "TBC",
+    "input_dir": "/Users/ADMIN/Documents/UNI SYDNEY/5. SYD SPRING 2026/Honour Research  ",
+    "output_dir": "/Users/ADMIN/Documents/UNI SYDNEY/5. SYD SPRING 2026/Honour Research  ",
+    "thesis_dir": "/Users/ADMIN/Documents/Claude/Projects/Honour Thesis",
+    "source_idea_file": "Researchese idea.docx",
+    "reading_list_file": "reading_list.docx",
+    "topic_one_liner": "Optimisation model for corporate payout policy with constraints on capital structure, cash balance and credit-stats ratios.",
+    "proposal": {
+      "page_limit": 12,
+      "word_target": 4000,
+      "citation_style": "author-date (USYD Finance)",
+      "section_weights": {
+        "1_introduction": 0.10,
+        "2_literature_synthesis": 0.20,
+        "3_theoretical_framework": 0.25,
+        "4_empirical_strategy": 0.20,
+        "5_contribution": 0.10,
+        "6_risks_limitations": 0.05,
+        "7_timeline_extensions": 0.05,
+        "8_references": 0.05
+      },
+      "page_layout": {
+        "font": "Times New Roman 12pt",
+        "spacing": 1.5,
+        "margins_inches": 1,
+        "words_per_page": 420
+      }
+    },
+    "thesis": {
+      "deadline": "2026-11-05",
+      "phases": [
+        "Phase 1: Scoping & Proposal (May–mid June 2026)",
+        "Phase 2: Modelling (late June–mid September 2026)",
+        "Phase 3: Empirical work (August–late October 2026)",
+        "Phase 4: Writing & Submission (mid September–early November 2026)"
+      ],
+      "data_sources": ["Compustat Annual (WRDS)", "CRSP (WRDS)", "S&P Long-Term Issuer Ratings (WRDS)"],
+      "natural_experiments": ["JGTRRA 2003 (baseline)", "AJCA 2004 repatriation (robustness)"]
+    },
+    "model": {
+      "framework": "Discrete-time dynamic programming",
+      "state_variables": ["cash C_t", "leverage K_t", "rating R_t in {AAA,...,CCC}"],
+      "controls": ["dividend d_t", "buyback b_t"],
+      "constraints": ["cash floor C_min", "target leverage K* with deviation penalty", "discrete rating step function g(C,K)"],
+      "benchmark_paper": "Bolton, Chen & Wang (2011)"
+    }
+  }
+}

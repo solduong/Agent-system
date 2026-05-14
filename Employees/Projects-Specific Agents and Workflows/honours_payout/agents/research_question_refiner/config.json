@@ -1,0 +1,9 @@
+{
+  "name": "research_question_refiner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Honours Payout RQ Refiner: sharpens the broad payout-policy thesis idea into specific, testable RQs, taking the candidate's reading list and benchmark papers (BCW 2011, Kisgen 2006/2009, ACW 2004) as fixed inputs.",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

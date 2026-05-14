@@ -1,0 +1,10 @@
+{
+  "name": "m7_model_comparator",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 6: Combines statsmodels + sklearn + diagnostic results into one comparison table and recommends a preferred model",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write", "Edit", "Bash"],
+  "max_turns": 25
+}

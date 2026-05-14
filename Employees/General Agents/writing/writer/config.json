@@ -1,0 +1,9 @@
+{
+  "name": "writer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Produces general-purpose written content — articles, emails, summaries, social copy, and more — in a specified tone, format, and length for a given audience; holds to ±10% of the target word count",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

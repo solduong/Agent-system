@@ -1,0 +1,10 @@
+{
+  "name": "m11_rf_classifier",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 5: Fits Random Forest variants via RandomizedSearchCV maximising macro F1, tunes decision threshold per candidate on validation, picks overfit-aware winner",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 80
+}

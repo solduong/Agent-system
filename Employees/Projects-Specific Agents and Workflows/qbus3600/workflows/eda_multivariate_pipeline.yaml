@@ -1,0 +1,44 @@
+name: eda_multivariate_pipeline
+description: "Multivariate interaction-effect analysis extension for the QBUS3600 Shared EDA notebook. Tests candidate interaction pairs using LRT and chi-squared, engineers significant binary interaction columns, overwrites the cleaned CSV, and writes an interaction summary txt report."
+version: "1.0"
+
+steps:
+  - name: run_multivariate_eda
+    agent: m_multivariate_eda_coder
+    task: |
+      Execute the full multivariate interaction analysis workflow for the QBUS3600 UNICEF dataset.
+
+      Your objectives (in order):
+
+      1. VALIDATE FIRST — write and execute /tmp/multivariate_eda_validate.py that:
+         - Loads the cleaned CSV as proxy df
+         - Runs all three interaction tests (LRT, chi-squared, Mann-Whitney)
+         - Selects top significant interactions (p < 0.05, max 30)
+         - Drops existing ix__ columns
+         - Adds new binary ix__ columns
+         - Overwrites UNICEF2026S1_clf_train_cleaned.csv
+         - Writes interaction_effects_summary.txt
+         - Prints "VALIDATION PASSED"
+
+      2. Fix any errors in the validation script until it passes.
+
+      3. INJECT CELLS — append new Section 4 (Multivariate Analysis) cells to the Shared EDA notebook. The cells must use `df` directly (no pd.read_csv). Structure:
+         - ## 4. Interaction Effect Testing
+         - ### 4.1 Candidate Interaction Pairs — Setup
+         - ### 4.2 LRT Tests
+         - ### 4.3 Chi-Squared Tests
+         - ### 4.4 Significant Interactions Summary
+         - ### 4.5 Engineer Interaction Columns (drops old ix__ cols, adds new ones)
+         - ### 4.6 Save Enhanced DataFrame (overwrites CSV, writes txt summary)
+
+      4. Confirm all outputs exist and are valid.
+
+      Key paths:
+      - Notebook: /Users/ADMIN/Documents/UNI SYDNEY/5. SYD SPRING 2026/QBUS3600/Main project/qbus3600_abs-zombies/Shared Modelling/EDA/Shared EDA.ipynb
+      - CSV: /Users/ADMIN/Documents/UNI SYDNEY/5. SYD SPRING 2026/QBUS3600/Main project/qbus3600_abs-zombies/Shared Modelling/EDA/EDA_outputs/UNICEF2026S1_clf_train_cleaned.csv
+      - Summary: /Users/ADMIN/Documents/UNI SYDNEY/5. SYD SPRING 2026/QBUS3600/Main project/qbus3600_abs-zombies/Shared Modelling/EDA/EDA_outputs/interaction_effects_summary.txt
+    input_keys: []
+    output_key: multivariate_eda_result
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 1800

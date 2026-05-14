@@ -1,0 +1,10 @@
+{
+  "name": "m12_rf_notebook_assembler",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 6: Assembles a single reproducible Jupyter notebook that runs the full Random Forest pipeline end-to-end, from data loading to final test evaluation",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 40
+}

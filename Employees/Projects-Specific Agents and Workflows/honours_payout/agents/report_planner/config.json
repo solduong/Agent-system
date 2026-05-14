@@ -1,0 +1,9 @@
+{
+  "name": "report_planner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Honours Payout Report Planner: produces a strict 12-page / ~4,000-word content brief for the honours-thesis proposal across the eight locked sections, with section-by-section word counts, table/figure budgets, depth levels, and global omissions.",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

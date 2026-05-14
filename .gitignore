@@ -1,0 +1,47 @@
+# --- Secrets / local config ---
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# --- macOS / Windows / editor noise ---
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- Workflow runtime artefacts ---
+# These are produced by run_pipeline.py inside the working directory.
+# They are user-specific and should never be committed.
+_workflow_state.json
+_agent_logs/
+*.log
+
+# --- Local outputs ---
+output/
+tmp/
+scratch/
+
+# --- Jupyter ---
+.ipynb_checkpoints/

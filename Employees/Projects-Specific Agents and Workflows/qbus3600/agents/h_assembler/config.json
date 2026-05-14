@@ -1,0 +1,9 @@
+{
+  "name": "h_assembler",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Assembler: Compiles all sections into a single ordered report draft with consistent numbering and a title page",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

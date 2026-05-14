@@ -1,0 +1,9 @@
+{
+  "name": "output_evaluator",
+  "model": "claude-sonnet-4-5",
+  "system_prompt": "system_prompt.md",
+  "description": "Scores the quality of a completed pipeline run on a 0–10 scale and identifies specific failure points — feeds quality_score into runs_history for performance tracking",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

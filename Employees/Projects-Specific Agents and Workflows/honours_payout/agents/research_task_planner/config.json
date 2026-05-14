@@ -1,0 +1,9 @@
+{
+  "name": "research_task_planner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Honours Payout Task Planner: turns the recommended RQ into a four-phase, dependency-mapped task plan keyed to the USYD honours academic-year timeline (proposal due mid-June 2026; thesis due early November 2026).",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

@@ -1,0 +1,39 @@
+name: nn_modeling_pipeline
+description: "Neural network modeling pipeline for QBUS3600 — UNICEF donor conversion. Builds MLPClassifier on the existing 124-feature engineered design matrix, sweeps architecture × resampling strategy × alpha, tunes threshold per cell on val for macro F1, selects overfit-aware winner. Requires the GLM pipeline to have been run first (uses its engineered features)."
+version: "1.0"
+
+# Execution order:
+# Phase 1 (sequential): M11 (NN model sweep + threshold tuning + winner selection)
+# Phase 2 (sequential): M7 (update model comparison to include NN winner)
+# Phase 3 (sequential): M9 (extend notebook with NN section)
+
+steps:
+  - name: nn_modeling
+    agent: m11_nn_modeler
+    task: "Fit MLPClassifier on the 124-feature design matrix from glm_outputs/data/. If parquets are absent, reproduce M1+M2 from cleaned_csv. Sweep 24 cells (3 architectures × 4 resampling strategies × 2 alpha). Tune threshold on val for macro F1. Output: results/nn/nn_grid.csv, nn_tradeoff.png, nn_vs_glm.png, nn_preferred.json, models/nn_winner.pkl."
+    input_keys: []
+    output_key: nn_results
+    parameters:
+      data_dir: "data/"
+      cleaned_csv: "UNICEF2026S1_clf_train_cleaned.csv"
+      feature_manifest_path: "data/feature_manifest.json"
+    retry_count: 1
+    timeout_seconds: 2400
+
+  - name: update_comparison
+    agent: m7_model_comparator
+    task: "Extend results/model_comparison.csv to include the NN winner from nn_preferred.json. Add a NN row with its val/test macro F1, val/test AUC, and threshold. Re-rank and update preferred_model.json if the NN beats the GLM winner. Output updated model_comparison.csv and model_comparison.md."
+    input_keys: [nn_results]
+    output_key: comparison
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: extend_notebook
+    agent: m9_notebook_assembler
+    task: "Append a NN modeling section to notebook/glm_modeling_pipeline.ipynb (or create notebook/nn_modeling_pipeline.ipynb if preferred). Section must include: feature engineering recap, NN grid sweep code, threshold tuning, comparison plot vs GLM, and winner summary. Deterministic seeds throughout."
+    input_keys: [nn_results, comparison]
+    output_key: notebook
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 900

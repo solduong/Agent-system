@@ -1,0 +1,139 @@
+name: generated_task_workflow
+description: "FINC3600 CFO Brief — 6-step pipeline producing a 2-page asset allocation briefing paper (draft → tables → review → revise → docx → pdf)."
+version: "1.0"
+
+steps:
+  - name: plan_brief
+    agent: report_planner
+    task: >
+      Mode A — Plan the 1-page brief.
+      Given a strict 1-page limit (~400 words of content with bullet points),
+      allocate word budgets across three sections proportional to rubric weights:
+        What (~50 words, 1%),
+        How (~80 words, 1.5%),
+        Why (~270 words, 7%).
+      Specify: required content per section, which tables to reference,
+      where in-text citations must appear, and the tone (CFO-level, direct,
+      no academic jargon). Use the rubric criteria as the checklist for each
+      section.
+      External inputs provided: project_brief (PDF content), rubric (marking
+      criteria), data_summary (Excel extraction — macro assumptions, asset class
+      forecasts, unit trust compositions, fund allocations), user_constraints
+      (logic checks: high inflation hurts all assets but global equity less so
+      due to US resilience; higher risk → higher return within same regime;
+      no academic sources; credible web-based in-text citations only).
+    input_keys: []
+    output_key: content_brief
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: draft_page1
+    agent: writer
+    task: >
+      Draft Page 1 content using the content_brief.
+      Section 1 — Recommendations (the What): state the recommended STI/MTG/LTG
+      allocation and forecast return/risk.
+      Section 2 — Key Implications (the How): explain how the portfolio meets
+      the Fund's CPI+2.5% return target, liquidity requirements (10% within
+      12 months, 25% within 3 years), and moderate-high risk appetite per
+      Board Policy.
+      Section 3 — Key Findings (the Why): short bullet points covering macro
+      factors (Australian inflation 2.7%, RBA path, AUD depreciation, Fed
+      policy), how these flow into asset class forecasts, how each unit trust
+      is affected by its underlying exposures, and how differences across
+      trusts inform the recommendation. Apply the user's logic checks
+      (inflation impact consistency, risk-return ordering).
+      Include credible in-text citations (RBA, Fed, IMF WEO,
+      Bloomberg/Refinitiv data). Tone: direct, no hedging language,
+      executive-level. Word count must fit ~400 words max.
+    input_keys: [content_brief]
+    output_key: page1_draft
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: build_tables
+    agent: table_maker
+    task: >
+      Create Tables 1, 2, 3 for Page 2.
+      Table 1 — Asset class review: columns = Asset Class, Historical Returns,
+      Forecast Returns, Difference in Return, Historical Risk. Rows = all
+      11 asset classes from the data.
+      Table 2 — Unit trust performance: columns = STI, MTG, LTG; rows =
+      Expected Return, Risk.
+      Table 3 — NSWDF portfolio: Recommended mix (STI/MTG/LTG %),
+      Forecast Return, Forecast Risk.
+      Use exact numbers from the Excel data (data_summary). Tables must be
+      numbered and captioned per the project brief template (p. 7 format).
+      External input provided: data_summary (all numbers from Excel),
+      brief_template (table formats from project brief).
+    input_keys: []
+    output_key: tables_draft
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: audit_draft
+    agent: reviewer
+    task: >
+      Audit the draft against the rubric. Check per-criterion:
+      (What) Is the allocation clearly stated? Is Table 3 disclosed? Is it
+      sensible on face value?
+      (How) Does it explain alignment with Fund purpose, return objective,
+      liquidity, risk appetite, Board Policy?
+      (Why) Are forecast returns/risk credible? Are methods/assumptions
+      stated? Is there macro justification (not just numbers)? Does asset
+      class analysis carry through to trust level? Is overall logic
+      connected?
+      (Professionalism) Format compliance, in-text citations present, AI
+      acknowledgement, credible sources?
+      Flag any MISSING or PARTIAL criteria. Check the user's logic:
+      inflation impact consistency, risk-return ordering.
+      Output per-criterion verdicts (MET/PARTIAL/MISSING) and a prioritised
+      fix list ranked by mark impact.
+    input_keys: [page1_draft, tables_draft]
+    output_key: review_report
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: revise_draft
+    agent: writer
+    task: >
+      Revision pass. Apply all fixes flagged in the review_report. Tighten
+      language, fill any rubric gaps, ensure logic checks pass, verify
+      citation placement. Do not exceed 1-page worth of content (~400 words).
+      Output the final Page 1 text and confirm all review items are addressed.
+    input_keys: [page1_draft, tables_draft, review_report]
+    output_key: final_content
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: assemble_docx
+    agent: docx
+    task: >
+      Assemble the formatted CFO brief as a .docx file.
+      Page 1: Heading "CFO Briefing — NSW Drought Fund: Initial Portfolio
+      Recommendation", then Sections 1-3 from final_content.
+      Page 2: Tables 1-3 from tables_draft, followed by AI acknowledgement
+      statement.
+      Formatting: portrait orientation, 12pt font, 1.15 line spacing, regular
+      margins (2.54cm all sides), bullet points for Section 3.
+    input_keys: [final_content, tables_draft]
+    output_key: cfo_brief_docx
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: convert_pdf
+    agent: pdf
+    task: >
+      Convert the .docx to a clean portrait PDF. Verify page count = exactly
+      2 pages. Output the final cfo_brief.pdf.
+    input_keys: [cfo_brief_docx]
+    output_key: cfo_brief_pdf
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300

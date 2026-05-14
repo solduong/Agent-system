@@ -1,0 +1,9 @@
+{
+  "name": "academic_researcher",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Builds a reference library of 15–25 targeted and standby sources: 60% matched to specific findings, 40% broader coverage across supplied research areas",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

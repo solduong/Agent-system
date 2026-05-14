@@ -1,0 +1,9 @@
+{
+  "name": "e_eda_writer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 EDA Writer: Writes Sections 4 (Descriptive Stats) and 5 (Relationships) at postgraduate academic level",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

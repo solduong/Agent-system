@@ -1,0 +1,867 @@
+================================================================================
+MULTI-AGENT SYSTEM — USER GUIDE
+================================================================================
+
+
+WHAT IS THIS?
+─────────────
+An office full of AI specialists. Each specialist (called an "agent") is good
+at one specific job — writing, researching, analysing data, building notebooks,
+planning, reviewing, and so on.
+
+You have three ways to run it:
+
+  1) TASK MODE
+     Tell the office manager what you need in plain language — the system
+     figures out which specialists to call and in what order.
+
+  2) WORKFLOW MODE
+     Hand it a pre-written job brief that already names the specialists
+     and their order. Supports picking up from a failed step.
+
+  3) SYSTEM-IMPROVE MODE
+     Ask it to audit and improve its own specialists. Every proposed
+     change requires your explicit approval — nothing changes without you.
+
+The system also watches itself quietly in the background:
+
+  • Every time you run a task, performance data is saved automatically.
+  • Every 10 runs, the system checks if any specialist is degrading.
+  • If issues are found, you get a notification (desktop, email, or Slack)
+    with the exact command to fix it.
+  • You still have the final say — nothing is changed without your approval.
+
+
+================================================================================
+HOW TO START — INTERACTIVE OR FLAGS, YOUR CHOICE
+================================================================================
+
+FULLY INTERACTIVE  (recommended for most runs)
+───────────────────────────────────────────────
+  python3 cli/run_pipeline.py
+
+The terminal walks you through everything step by step:
+
+  ┌─────────────────────────────────────────┐
+  │              SELECT MODE               │
+  └─────────────────────────────────────────┘
+
+    1.  Task Mode
+    2.  Workflow Mode
+    3.  System-Improve Mode
+
+  Mode › _
+
+After mode, it asks for project, sub-task, output directory, and then
+the details specific to the mode you chose.
+
+USING FLAGS  (skip prompts you already know)
+─────────────────────────────────────────────
+Any flag you supply is used silently — the prompt for that field is skipped.
+Any flag you leave out is prompted interactively.
+
+  # Workflow known; everything else prompted
+  python3 cli/run_pipeline.py --workflow eda_report_pipeline
+
+  # Task and project known; sub-task, output dir prompted; dry-run from flag
+  python3 cli/run_pipeline.py --task "Analyse the data" --project qbus3600 --dry-run
+
+  # Fully flagged — no prompts at all
+  python3 cli/run_pipeline.py --task "Analyse the data" --project qbus3600 --sub-task "EDA Phase 1" --working-dir outputs
+
+SHELL TIP
+──────────
+Write multi-flag commands on ONE line. If you break across lines with \
+make absolutely sure there is no space after the \ — a trailing space stops
+the continuation and zsh treats the next line as a separate command, which
+causes "zsh: command not found" errors.
+
+  ✓ Correct:  python3 cli/run_pipeline.py --workflow my_pipeline --project qbus3600
+  ✗ Wrong:    python3 cli/run_pipeline.py \         ← trailing space after \ breaks it
+                  --project qbus3600
+
+
+================================================================================
+PART 1 — TASK MODE
+================================================================================
+
+INTERACTIVE
+────────────
+  python3 cli/run_pipeline.py
+
+Select 1 — Task Mode. The prompts will ask for:
+
+  Project     → pick from your existing projects, or create a new one
+  Sub-task    → optional label grouping related runs (press Enter to skip)
+  Output dir  → where task files are saved (press Enter for the default)
+  Task        → describe what you want done
+  Live or Dry → 1 for a real API call, 2 to preview with no charges
+
+WITH FLAGS
+───────────
+  python3 cli/run_pipeline.py --task "Analyse the donor dataset and produce an EDA report" --project qbus3600 --sub-task "EDA Phase 1" --working-dir outputs
+
+DRY RUN (no API calls, no charges)
+────────────────────────────────────
+  python3 cli/run_pipeline.py --task "Produce a research report on donor fatigue" --dry-run
+
+Or select "2 — Dry run" at the interactive prompt.
+
+
+REPEAT RUNS — THE WORKFLOW CACHE
+─────────────────────────────────
+If you run the SAME task text a second time, the system reuses the workflow
+plan it already generated. Manager and Workflow Planner are skipped — straight
+to executing the specialists. You'll see this on a cache hit:
+
+    ── cache hit — skipping manager + workflow_planner ──
+
+To force a fresh plan (e.g. after you changed a specialist's role and want
+the manager to re-pick agents), add --no-cache:
+
+  python3 cli/run_pipeline.py --task "..." --no-cache
+
+See Part 6 for full cache details.
+
+
+BEHIND THE SCENES
+──────────────────
+  STEP 1 — The Manager reads your task and works out which specialists are
+           needed and in what order. If a specialist is missing, it flags
+           the gap.
+
+  STEP 2 — For each gap, the system automatically:
+             • Creates the missing specialist (Prompt Engineer designs it)
+             • Checks it makes sense (Registry Auditor approves/rejects)
+             • Adds it to the team if approved
+             Then the Manager re-plans with the updated team.
+
+  STEP 3 — The plan is written up as a formal pipeline and the specialists
+           run one by one.
+
+  STEP 4 — Performance is saved silently. If 10 runs have now passed since
+           the last check, an analysis runs in the background.
+
+
+================================================================================
+PART 2 — WORKFLOW MODE
+================================================================================
+
+Use this when you already know which pipeline to run. The planning step
+is skipped — the named pipeline runs directly.
+
+INTERACTIVE
+────────────
+  python3 cli/run_pipeline.py
+
+Select 2 — Workflow Mode. The terminal lists every available workflow
+numbered (general ones and any project-specific ones for your selected
+project). Pick a number or type the name.
+
+The terminal then asks:
+
+  Resume from step › _
+
+Type a step name to restart a failed run from that point, or press Enter
+to start from the beginning.
+
+WITH FLAGS
+───────────
+  python3 cli/run_pipeline.py --workflow eda_report_pipeline --project qbus3600 --inputs-file ./inputs.json
+
+PICKING UP WHERE YOU LEFT OFF
+──────────────────────────────
+The system saves its progress after every step. If something fails:
+
+  Interactive: run python3 cli/run_pipeline.py → select workflow → enter step name
+  at the "Resume from step" prompt.
+
+  Via flags (all on one line):
+  python3 cli/run_pipeline.py --workflow eda_report_pipeline --project qbus3600 --resume-from write_eda_sections --state-file System_logs/_workflow_state.json
+
+SEE WHAT PIPELINES ARE AVAILABLE
+──────────────────────────────────
+  python3 cli/run_pipeline.py --project qbus3600 --list
+
+
+================================================================================
+PART 3 — SYSTEM-IMPROVE MODE
+================================================================================
+
+Ask the system to audit and improve its own specialists. Every change
+requires your explicit approval — nothing is written without your say.
+
+INTERACTIVE
+────────────
+  python3 cli/run_pipeline.py
+
+Select 3 — System-Improve Mode. Choose Live or Dry run.
+
+VIA FLAG
+─────────
+  python3 cli/run_pipeline.py --system-improve --project qbus3600
+
+STANDALONE SCRIPT (same behaviour)
+────────────────────────────────────
+  python3 system_improvement/run_self_improve.py
+  python3 system_improvement/run_self_improve.py --project qbus3600
+  python3 system_improvement/run_self_improve.py --dry-run
+  python3 system_improvement/run_self_improve.py --deep      ← see below
+
+
+ROUTINE VS DEEP AUDIT
+──────────────────────
+By default the audit is a ROUTINE pass. Registry Auditor sees only the
+one-line description of each specialist plus the path to its system prompt.
+When two descriptions look similar (similar verbs, similar objects, similar
+domain language) it reads those specific prompts to confirm whether they
+really overlap.
+
+  • Most audits read 0–3 prompts on demand.
+  • Routine pass costs roughly 16k input tokens.
+  • Use --deep ONLY when you suspect that descriptions have drifted
+    away from what the specialists actually do across many agents.
+    Deep mode inlines every specialist's full prompt — about 50k tokens,
+    roughly 5x the cost of a routine pass.
+
+In short: start with the routine pass. Only escalate to --deep if the
+auditor itself recommends it in its report.
+
+
+WHAT HAPPENS
+────────────
+  STEP 1 — Registry Auditor runs a full audit of all specialists and
+           writes a structured findings report.
+
+  STEP 2 — For each finding requiring a prompt rewrite:
+             • Prompt Engineer proposes a new prompt
+             • A coloured diff is shown in the terminal:
+                 green = added  |  red = removed
+
+  STEP 3 — You decide for each proposed change:
+
+             [A] Approve  → change is validated then written to disk
+             [R] Reject   → type a reason (required); reason goes back
+                            to the Prompt Engineer for a retry (max 2)
+             [E] Edit     → opens the file in your editor; you make
+                            the final version yourself
+             [S] Skip     → skips this and all remaining proposals
+
+  STEP 4 — Approved changes are validated by Registry Auditor before
+           being written. All decisions are logged.
+
+
+PROTECTED SPECIALISTS
+─────────────────────
+Six specialists can never be modified through this pipeline:
+
+  manager  •  prompt_engineer  •  registry_auditor  •  workflow_planner
+  output_evaluator  •  performance_analyzer
+
+These are the system's core coordination and monitoring layer.
+Edit them manually if you need to.
+
+
+================================================================================
+PART 4 — PROJECTS AND SUB-TASKS
+================================================================================
+
+PROJECTS
+─────────
+A project loads a set of project-specific specialists and pipelines on top
+of the general ones. Pass --project <id> or select from the interactive list.
+
+The interactive project prompt shows all existing projects (from the
+Employees folder and your run history) numbered. Pick a number, type a
+name, or type "new" to create a new one.
+
+SUB-TASKS
+──────────
+A sub-task is an optional label you attach to a run. It's recorded in
+System_logs/system_history.csv so you can filter all runs that belong to the same
+piece of work.
+
+  Examples: "EDA Phase 1", "CFO Brief Q2", "UNICEF ML Notebook — Phase 3"
+
+The interactive sub-task prompt shows your existing labels numbered.
+Pick one, type "new" to create a new one, or press Enter to skip
+(recorded as NaN — still saved, just unlabelled).
+
+Via flag:
+  python3 cli/run_pipeline.py --task "..." --sub-task "UNICEF ML Notebook"
+
+Use the same label across multiple runs that are part of the same
+deliverable. Filter by task_group in System_logs/system_history.csv to see them all.
+
+
+================================================================================
+PART 5 — THE PERFORMANCE SYSTEM
+================================================================================
+
+The system watches itself quietly after every run. Nothing to activate.
+
+
+WHAT GETS SAVED AFTER EVERY RUN
+────────────────────────────────
+  System_logs/runs_history.jsonl  — full detail: task, project, sub-task, success,
+                        token counts, cost, duration, per-step breakdown
+
+  System_logs/system_history.csv  — same info in spreadsheet form; also records
+                        improvement events with trigger_id linking them
+                        back to the run that caused the analysis to fire
+
+
+THE AUTOMATIC CHECK (EVERY 10 RUNS)
+────────────────────────────────────
+After the 10th run since the last analysis, the system:
+
+  1. Runs performance_analyzer — reads history and checks for agents with
+     high error rates, token waste, or low quality contribution.
+
+  2. If issues found, prints specific findings to the terminal:
+
+       ── improvement trigger ──
+         10 new runs since last analysis
+         Running performance_analyzer...
+
+         2 improvement target(s) found:
+           [high]   reviewer: prompt lacks structured output spec
+           [medium] writer: no word count constraint enforced
+
+  3. Sends a notification (desktop / email / Slack if configured).
+
+To action: run System-Improve Mode.
+  python3 cli/run_pipeline.py --system-improve --project qbus3600
+
+
+CHECKING HEALTH AT ANY TIME
+────────────────────────────
+  python3 cli/check_status.py
+
+Prints a dashboard: success rate, average quality, per-agent error rates,
+recent runs, last analysis time.
+
+  python3 cli/check_status.py --short    ← one-line summary
+  python3 cli/check_status.py --notify   ← push status as a notification now
+
+Open System_logs/system_history.csv in Excel or Numbers for the full history.
+Filter the task_group column to see all runs for one sub-task label.
+
+
+NOTIFICATIONS
+─────────────
+macOS desktop notifications are always active with no setup.
+
+To add email or Slack, open .env and add:
+
+  NOTIFY_EMAIL_TO=you@gmail.com
+  NOTIFY_EMAIL_FROM=you@gmail.com
+  NOTIFY_SMTP_HOST=smtp.gmail.com
+  NOTIFY_SMTP_PORT=587
+  NOTIFY_SMTP_USER=you@gmail.com
+  NOTIFY_SMTP_PASS=your-app-password
+
+  NOTIFY_SLACK_WEBHOOK=https://hooks.slack.com/services/xxx/yyy/zzz
+
+You'll be notified for: run failure, quality drop, improvement found,
+improvement applied, improvement blocked, health check passed.
+
+
+================================================================================
+PART 6 — KEEPING TOKEN COSTS DOWN
+================================================================================
+
+The system has several built-in cost-saving features that work automatically.
+You don't normally need to do anything — but it's useful to know they exist
+so you can override them when needed.
+
+
+PARALLEL EXECUTION  (saves wall time, not tokens)
+──────────────────────────────────────────────────
+The system can run independent steps at the same time. Two specialists
+who don't depend on each other's output (e.g. building tables and
+researching references after the same upstream finished) run side-by-side
+instead of one-after-the-other. This shortens wall time noticeably on
+fan-out workflows; total token cost is unchanged.
+
+INTERACTIVE
+You're prompted right after the working-dir question:
+
+    ┌─────────────────────────────────────────┐
+    │            CONCURRENCY                  │
+    └─────────────────────────────────────────┘
+      1.  Parallel  (4 concurrent — recommended default)
+      2.  Sequential (1 at a time — safest, slowest)
+      3.  Custom    (enter a number)
+
+You can also type a number directly (e.g. "8" runs up to 8 concurrent).
+
+VIA FLAG
+  python3 cli/run_pipeline.py --task "..." --max-parallel 4
+  python3 cli/run_pipeline.py --task "..." --max-parallel 1   # force sequential
+
+WHEN A SPECIALIST MUST RUN ALONE
+Add to the YAML for that step:
+
+    - name: write_output
+      agent: writer
+      parallel_safe: false
+      ...
+
+Useful for: file-locking, external rate limits, or steps that genuinely
+must observe the full prior state.
+
+WHAT HAPPENS IF A PARALLEL STEP FAILS
+If one of the parallel steps fails, the system:
+  • lets the other in-flight steps finish
+  • cancels queued steps that depend on the failed step's output
+  • keeps independent steps running normally
+
+You'll see "cancelled_upstream_failure" in the run summary for the
+cancelled steps, with an "upstream" field naming the step that failed.
+
+RESUME MODE
+--resume-from automatically forces sequential execution (max-parallel=1).
+Mixing partial state with concurrent execution is risky.
+
+
+WORKFLOW CACHE  (task mode, semantic)
+──────────────────────────────────────
+Every task-mode run starts with TWO LLM-heavy planning calls before any
+real work begins:
+
+  • Manager           — picks which specialists to involve
+  • Workflow Planner  — orders them into a YAML plan
+
+Together these cost roughly $0.10–0.30 per run. The cache saves the YAML
+plan from past runs and reuses it on future ones — and not just for
+identical task text. The cache is SEMANTIC: it understands paraphrases.
+
+HOW IT WORKS
+─────────────
+When you submit a task, the system first sends it through Haiku (cheap, fast
+~$0.001) to canonicalise it — restate it in 12 words or fewer, lowercase,
+no punctuation, focused on the action and target. Then it hashes the
+CANONICAL form and looks up the cache.
+
+Result: these three all hit the same cached plan:
+
+  • "forecast NSW drought outcomes"
+  • "predict drought outcomes for NSW"
+  • "build a drought forecasting model for NSW"
+
+The canonicalisation is itself memoised, so re-running an identical task
+text doesn't re-call Haiku.
+
+INTERACTIVE
+────────────
+You're prompted in task mode when neither --no-cache nor --use-cache is
+on the command line:
+
+    ┌─────────────────────────────────────────┐
+    │            WORKFLOW CACHE               │
+    └─────────────────────────────────────────┘
+      1.  Use cache (recommended)
+            Reuse a cached plan if a similar task ran before.
+      2.  No cache
+            Force fresh planning every time.
+
+The prompt also tells you when to pick "No cache" — typically when you've
+just edited an agent's prompt or role and want the Manager to re-evaluate
+which agents to use.
+
+VIA FLAGS
+──────────
+  python3 cli/run_pipeline.py --task "..." --use-cache    # silent reuse
+  python3 cli/run_pipeline.py --task "..." --no-cache     # force fresh
+
+CACHE INVALIDATION (automatic)
+───────────────────────────────
+The cache is invalidated when any of these are true — you don't have to
+manage it:
+
+  1. The cached plan names an agent that no longer exists.
+  2. The Manager's or Workflow Planner's system_prompt.md has changed
+     since the cache was written. (The system stores 8-hex hashes of
+     these prompts alongside each cached YAML and re-checks on every
+     lookup.)
+
+Pure worker-agent edits (e.g. tweaking the Reviewer's prompt) do NOT
+invalidate the cache — those affect output quality, not workflow shape.
+If you want a fresh plan after a worker-agent edit, use --no-cache.
+
+
+MODEL TIERING
+──────────────
+Coordination/audit specialists run on a faster, cheaper model:
+
+  Sonnet (cheap):  manager, workflow_planner, output_evaluator,
+                   performance_analyzer
+  Opus (powerful): everyone else (the specialists that produce deliverables)
+
+You don't need to do anything — this is set per-specialist in their
+config.json. Don't promote a coordination specialist back to opus without
+a real reason; it multiplies the per-task cost noticeably.
+
+
+COMPACT ROSTER FOR THE MANAGER
+───────────────────────────────
+The Manager used to receive a one-line description of every single
+specialist on every planning call (~2,600 tokens per call, on every task).
+
+Now it receives a compact category-grouped tree:
+
+    ## General agents
+    auditing  : prompt_engineer, registry_auditor, output_evaluator, ...
+    documents : docx, xlsx, pdf, pdf-reading, file-reading, pptx
+    writing   : section_writer, business_insights_writer, writer
+    ...
+
+If the Manager genuinely needs a description before deciding, it Reads the
+specific specialist's config.json — never the full system_prompt.md. That
+drops planning input by about 85% per call.
+
+Nothing for you to configure — this is automatic.
+
+
+ROUTINE VS DEEP REGISTRY AUDIT
+───────────────────────────────
+See Part 3. Default audit is the routine pass (~16k tokens). Use --deep
+(~50k tokens) only when you suspect descriptions have drifted across many
+specialists at once.
+
+
+WHEN TO USE --dry-run
+──────────────────────
+Any time you want to see what WOULD happen without spending tokens:
+
+  python3 cli/run_pipeline.py --task "..." --dry-run
+
+Shows resolved prompts, agents that would be called, and the workflow
+structure — without making API calls. Useful when wiring up a new task
+or debugging a workflow.
+
+
+================================================================================
+PART 7 — FULL SYSTEM AUDIT  (read-only)
+================================================================================
+
+To generate an audit report without making any changes:
+
+  python3 system_improvement/run_registry_audit.py
+  # Report saved to: audit_output/audit_report.md
+
+To run the audit AND apply fixes interactively, use System-Improve Mode
+(Part 3 above).
+
+
+================================================================================
+PART 8 — SETTING UP A NEW PROJECT
+================================================================================
+
+STEP 1 — COPY THE TEMPLATE
+────────────────────────────
+  cp -r "Employees/Projects-Specific Agents and Workflows/_template" "Employees/Projects-Specific Agents and Workflows/your_project_id"
+
+Use lowercase letters and underscores.
+
+
+STEP 2 — FILL IN THE PROJECT DETAILS
+──────────────────────────────────────
+Open project.json:
+
+  {
+    "id": "your_project_id",        ← must match the folder name exactly
+    "name": "A readable name",
+    "description": "One sentence.",
+    "version": "1.0",
+    "workflow": "your_main_pipeline",
+    "extends": [],
+    "context": {}
+  }
+
+Once created the project appears automatically in the interactive
+project selection list next time you run.
+
+
+STEP 3 — ADD YOUR SPECIALISTS  (optional)
+──────────────────────────────────────────
+Only needed when:
+  • The task refers to your specific files or section names
+  • The output format is fixed for this project
+  • You want a tighter version of a general specialist
+
+See Part 9 for how to create a specialist.
+
+
+STEP 4 — CHECK EVERYTHING LOADED
+───────────────────────────────────
+  python3 system_improvement/agent_registry.py your_project_id
+
+
+================================================================================
+PART 9 — ADDING A NEW SPECIALIST
+================================================================================
+
+Every specialist is a folder with just two files.
+
+
+WHERE TO PUT IT
+───────────────
+  • Useful for any project  →  Employees/General Agents/<category>/
+    Categories: analysis, assembly, design, documents, notebook_analysis,
+                planning, qa, research, tables, writing
+
+  • Only for one project  →
+    Employees/Projects-Specific Agents and Workflows/<project_id>/agents/
+
+Do not place agents in auditing/ or orchestration/ — system layer only.
+
+
+THE TWO FILES
+─────────────
+config.json:
+
+  {
+    "name": "my_specialist",
+    "model": "claude-opus-4-6",
+    "system_prompt": "system_prompt.md",
+    "description": "One sentence on what this specialist does.",
+    "version": "1.0",
+    "parameters": {},
+    "tools": []
+  }
+
+  tools:
+    []                 → no tools (text only, fastest and cheapest)
+    ["Read"]           → can read files only
+    ["Read", "Write"]  → can read and write files
+    absent or null     → full default access (Read, Write, Edit, Bash…)
+
+
+system_prompt.md:
+
+  1. One-line role statement:
+     "You are a [role] that [what you do]."
+  2. ## Input — what the system passes at runtime
+  3. ## Your job — step-by-step methodology
+  4. ## Output — format and save path
+
+  General specialists: never hardcode file names, paths, or project
+  details. They come in via the runtime task message.
+  Project specialists: hardcoding is expected — that's the point.
+
+
+NO REGISTRATION NEEDED
+────────────────────────
+Create the folder and two files. Found automatically.
+
+
+LET THE SYSTEM CREATE ONE FOR YOU
+────────────────────────────────────
+  python3 cli/run_pipeline.py
+
+Select Task Mode, then describe the gap:
+  "I need a new specialist that converts markdown tables to LaTeX"
+
+The Manager detects the gap, Prompt Engineer designs the files, Registry
+Auditor reviews them, and the specialist is added if approved.
+
+
+REPLACING A GENERAL SPECIALIST FOR ONE PROJECT
+────────────────────────────────────────────────
+Create a project specialist with the EXACT same name as the general one.
+
+  Employees/Projects-Specific Agents and Workflows/qbus3600/agents/table_maker/
+
+It replaces the general version for that project only.
+
+
+================================================================================
+PART 10 — THE SPECIALIST TEAM AT A GLANCE
+================================================================================
+
+── MONITORING ────────────────────────────────────────────────────────────────
+
+  output_evaluator     Scores pipeline outputs 0–10. Called by
+                       cli/run_feedback_loop.py.
+
+  performance_analyzer Reads run history, finds degraded agents.
+                       Triggered automatically every 10 runs.
+
+── AUDITING ──────────────────────────────────────────────────────────────────
+
+  prompt_engineer      Designs and rewrites specialist prompts.
+  registry_auditor     Quality gate — approves/rejects all agent changes.
+
+── ORCHESTRATION ─────────────────────────────────────────────────────────────
+
+  manager              Plans which specialists run and in what order.
+                       Has Read access only — plans, never executes.
+  workflow_planner     Turns the plan into a runnable pipeline YAML.
+
+── WRITING ───────────────────────────────────────────────────────────────────
+
+  section_writer           Academic report sections
+  business_insights_writer Exec-friendly plain English
+  writer                   General writing
+
+── RESEARCH ──────────────────────────────────────────────────────────────────
+
+  academic_researcher      Finds and organises 15–25 sources
+  research_question_refiner Focuses broad topics into sharp questions
+  research_task_planner    Phases a research goal into a task plan
+
+── PLANNING ──────────────────────────────────────────────────────────────────
+
+  report_planner           Word counts and section budgets
+
+── ANALYSIS & DATA ───────────────────────────────────────────────────────────
+
+  data_analyzer            Dataset analysis and key findings
+  notebook_mapper          Maps a Jupyter notebook's structure
+  chunk_extractor          Pulls findings from notebooks into clean files
+
+── TABLES & ASSEMBLY ─────────────────────────────────────────────────────────
+
+  table_maker              Turns findings into publication-ready tables
+  report_generator         Assembles all sections into one final document
+
+── QUALITY CHECK ─────────────────────────────────────────────────────────────
+
+  reviewer                 Checks a document against a rubric
+  citation_verifier        Fixes citations, finalises reference list
+
+── DOCUMENTS (used on demand) ────────────────────────────────────────────────
+
+  docx, xlsx, pdf, pdf-reading, file-reading, pptx
+
+
+================================================================================
+PART 11 — COMMON QUESTIONS
+================================================================================
+
+Q: What's the simplest way to start?
+A: Run  python3 cli/run_pipeline.py  and follow the prompts. No flags needed.
+
+Q: Where do my output files go?
+A: To the folder you specify at the interactive prompt, or via --working-dir.
+   The agent-system folder only stores system and history files.
+
+Q: Do I need to register a new specialist anywhere?
+A: No. Create the folder with the two files — found automatically.
+
+Q: What if a step fails halfway through?
+A: The system saves progress after every step. In interactive mode, run
+   python3 cli/run_pipeline.py, select Workflow Mode, and enter the step name
+   at the resume prompt. Via flag: --resume-from <step_name>.
+
+Q: Can I preview a run without spending API credits?
+A: Yes. Add --dry-run to any command, or select "2 — Dry run" at the
+   interactive prompt in Task or System-Improve mode.
+
+Q: What if two specialists have the same name?
+A: The project version always wins for that project. General version is
+   unaffected for everyone else.
+
+Q: Where are the logs?
+A: Inside agent-system/System_logs/_agent_logs/{run_id}_{sub-task}/. One .jsonl file per
+   specialist. Never in your output folder.
+
+Q: What is the sub-task label?
+A: An optional label you attach to runs to group them. Use the same label
+   for all runs on the same deliverable. Filter by task_group in
+   System_logs/system_history.csv to see the full history of one piece of work.
+   If you press Enter without typing anything, it's saved as NaN.
+
+Q: What does trigger_id mean in System_logs/system_history.csv?
+A: It links improvement rows back to the run that triggered the analysis.
+   Filter trigger_id = <run_id> to see a run and everything it triggered.
+
+Q: Can the system improve itself without my approval?
+A: No. Every prompt change requires your explicit [A] approval. The
+   performance system finds issues and notifies you — it never writes files
+   on its own.
+
+Q: What happens to my rejection reasons?
+A: Sent to the Prompt Engineer as correction feedback for the retry.
+   Also stored in System_logs/improvement_log.jsonl and System_logs/system_history.csv.
+
+Q: Can I improve manager / prompt_engineer through the pipeline?
+A: No. Six system agents are permanently protected:
+   manager, prompt_engineer, registry_auditor, workflow_planner,
+   output_evaluator, performance_analyzer.
+   Modify them manually if needed.
+
+Q: I get "zsh: command not found" when using multiple flags. Why?
+A: Trailing spaces after \ in multi-line commands break the continuation.
+   Either write the whole command on one line, or make sure \ is the
+   very last character on each line (no space after it).
+
+Q: Can I use a cheaper model for some steps?
+A: Yes. In the specialist's config.json, change "model" to
+   "claude-haiku-4-5". The orchestration layer (manager, workflow_planner,
+   output_evaluator, performance_analyzer) is already on sonnet by design;
+   only promote them back to opus if you have a specific reason. Reserve
+   opus for heavy writing/analysis specialists.
+
+Q: Why is the second time I run the same task much faster and cheaper?
+A: That's the workflow cache. The system canonicalises your task (one cheap
+   Haiku call ~$0.001) and reuses the cached plan if it's the same intent —
+   even paraphrased. Manager + Workflow Planner are skipped on a hit. See
+   Part 6.
+
+Q: Does the cache only work for identical task text?
+A: No. It uses semantic canonicalisation. "Forecast NSW drought outcomes",
+   "predict drought outcomes for NSW", and "build a drought forecasting
+   model for NSW" all hit the same cached plan.
+
+Q: Will the cache go stale if I edit a specialist's prompt?
+A: Only the Manager and Workflow Planner are tracked for cache invalidation.
+   If you edit either, all cached plans they produced are auto-invalidated
+   on the next lookup. Edits to other specialists (writers, analysts, etc.)
+   don't invalidate the cache, since those agents shape the OUTPUT but not
+   which agents are picked or in what order. If you want a fresh plan after
+   a worker-agent edit, run with --no-cache or pick "No cache" in the
+   interactive prompt.
+
+Q: How do I bypass the cache for one run?
+A: Either pick "No cache" at the Workflow Cache prompt, or pass --no-cache
+   on the command line. Both force the Manager and Workflow Planner to run
+   fresh.
+
+Q: My workflow has steps that don't depend on each other. Can they run together?
+A: Yes, automatically. The system reads each step's input_keys and runs
+   any step whose inputs are all ready. Up to 4 specialists run at the
+   same time by default — pick "Parallel" or just press Enter at the
+   Concurrency prompt. Use --max-parallel 1 (or pick "Sequential") if you
+   want one-at-a-time. See Part 6 for details.
+
+Q: How do I make sure ONE specific step runs alone?
+A: Add  parallel_safe: false  to that step in the YAML. The system will
+   drain other in-flight steps before running it, then run it alone, then
+   resume parallel scheduling for everything after.
+
+Q: How do I run a deeper system audit?
+A: python3 system_improvement/run_self_improve.py --deep
+   The default routine audit shows the auditor only descriptions; --deep
+   inlines every full prompt. Routine costs ~16k tokens, --deep costs ~50k.
+   Use --deep only when you suspect descriptions have drifted across many
+   specialists.
+
+Q: Where are proposed changes staged before I approve them?
+A: In System_logs/_pending/<specialist_name>/system_prompt.proposed.md
+   inside the agent-system folder.
+
+Q: How do I get notifications when improvements are found?
+A: macOS desktop notifications fire automatically. Add email or Slack
+   credentials to .env. See Part 5 for details.
+
+Q: What if I want the performance check to run more or less often?
+A: Use cli/run_feedback_loop.py and pass --analyze-every N to change the
+   trigger frequency.
+
+
+================================================================================
+END OF GUIDE
+================================================================================

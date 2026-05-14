@@ -1,0 +1,10 @@
+{
+  "name": "m_multivariate_eda_coder",
+  "model": "claude-opus-4-5",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Multivariate EDA Coder: Writes and executes multivariate analysis cells (interaction effect testing) into the Shared EDA notebook, adds significant interaction columns to df, overwrites the cleaned CSV, and produces a txt summary report.",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Bash"],
+  "max_turns": 60
+}

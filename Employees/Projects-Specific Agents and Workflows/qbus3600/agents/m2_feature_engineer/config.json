@@ -1,0 +1,10 @@
+{
+  "name": "m2_feature_engineer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 2: Builds the design matrix — encoding, scaling, interaction terms — fitting transformers on train and applying to val/test",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 30
+}

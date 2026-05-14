@@ -1,0 +1,10 @@
+{
+  "name": "m11_nn_modeler",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 5c: Fits sklearn MLPClassifier on the engineered 124-feature design matrix, sweeping architectures × resampling strategies × alpha; tunes decision threshold on val for macro F1 and selects an overfit-aware winner",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 80
+}

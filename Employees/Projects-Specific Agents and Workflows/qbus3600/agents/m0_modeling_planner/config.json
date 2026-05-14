@@ -1,0 +1,10 @@
+{
+  "name": "m0_modeling_planner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 0: Reviews the cleaned dataset description and produces a modeling plan — candidate GLM specs, success criteria, validation strategy",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write"],
+  "max_turns": 12
+}

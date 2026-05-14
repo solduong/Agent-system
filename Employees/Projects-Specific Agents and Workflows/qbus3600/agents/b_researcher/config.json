@@ -1,0 +1,9 @@
+{
+  "name": "b_researcher",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Academic Researcher: Builds a reference library of 15–25 targeted and standby sources for the EDA report",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

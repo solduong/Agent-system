@@ -1,0 +1,9 @@
+{
+  "name": "i_rubric_checker",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Rubric Checker: Audits the assembled draft against the marking rubric and flags gaps by mark impact",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

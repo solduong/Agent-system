@@ -1,0 +1,10 @@
+{
+  "name": "m4_statsmodels_fitter",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 4a: Fits each statsmodels GLM in the grid for inference — saves coefficients, SE, z, p, AIC, BIC, deviance",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 60
+}

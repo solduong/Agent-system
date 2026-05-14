@@ -1,0 +1,9 @@
+{
+  "name": "file-reading",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Reads and extracts structured content from text, data, and document files (txt, csv, json, yaml, md, xlsx, docx) — returns clean, usable text or data for downstream agents",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

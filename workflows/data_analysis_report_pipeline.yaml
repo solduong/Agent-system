@@ -1,0 +1,104 @@
+name: data_analysis_report_pipeline
+description: "General-purpose pipeline: maps a notebook, extracts findings, plans and writes a report, assembles, checks, and finalises citations."
+version: "2.0"
+
+# Uses general agents from agents/.
+# To customise for a project: copy this file into projects/<id>/workflows/
+# and swap general agent names for project-specific ones where needed.
+#
+# Execution order:
+# Phase 1 (sequential): notebook_mapper → chunk_extractor
+# Phase 2 (sequential): academic_researcher → report_planner
+# Phase 3 (parallel):   table_maker, section_writer (×2 or more)
+# Phase 4 (sequential): business_insights_writer → report_generator → reviewer → citation_verifier
+
+steps:
+  - name: map_notebook
+    agent: notebook_mapper
+    task: "Map the notebook structure. Provide: notebook file path, output path, agent tags to use."
+    input_keys: []
+    output_key: notebook_map
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: extract_chunks
+    agent: chunk_extractor
+    task: "Extract findings into chunk files using the notebook map. Provide: notebook path, map path, chunk definitions, project context."
+    input_keys: [notebook_map]
+    output_key: chunks
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: build_references
+    agent: academic_researcher
+    task: "Build a reference library. Provide: findings document, research areas, target source count, output path."
+    input_keys: [chunks]
+    output_key: references
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: plan_report
+    agent: report_planner
+    task: "Produce the content brief. Provide: chunk files, references, section list with weights, page limit, output path."
+    input_keys: [chunks, references]
+    output_key: report_brief
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: make_tables
+    agent: table_maker
+    task: "Produce publication-ready tables within the brief's budget. Provide: chunk files, report brief, output path."
+    input_keys: [chunks, report_brief]
+    output_key: tables
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: write_sections
+    agent: section_writer
+    task: "Write the analytical/technical report sections. Provide: sections to write, chunk files, brief, tables, references, output path."
+    input_keys: [chunks, report_brief, tables, references]
+    output_key: written_sections
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: write_business_sections
+    agent: business_insights_writer
+    task: "Write the executive summary and business insights sections. Provide: analysis document, signals file, references, brief, domain context, output path."
+    input_keys: [written_sections, chunks, references, report_brief]
+    output_key: business_sections
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: assemble_draft
+    agent: report_generator
+    task: "Assemble all sections in order into a draft report. Provide: section files in order, tables file, brief, title details, output path."
+    input_keys: [written_sections, business_sections, tables, report_brief]
+    output_key: report_draft
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: review_draft
+    agent: reviewer
+    task: "Audit the draft against the rubric/criteria. Provide: draft file, rubric criteria, formatting checks, output path."
+    input_keys: [report_draft]
+    output_key: review
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: finalise_citations
+    agent: citation_verifier
+    task: "Resolve citation flags, verify consistency, compile reference list. Provide: draft, reference library, flag syntax, citation style, output paths."
+    input_keys: [report_draft, references, review]
+    output_key: report_final
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300

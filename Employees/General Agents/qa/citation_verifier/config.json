@@ -1,0 +1,9 @@
+{
+  "name": "citation_verifier",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Resolves unsupported citation flags and reviewer-flagged citation issues, verifies citation consistency against a reference library, and compiles the final clean reference list — produces a citation log of resolved, unresolved, and removed entries",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

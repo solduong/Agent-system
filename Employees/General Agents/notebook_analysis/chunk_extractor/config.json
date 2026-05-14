@@ -1,0 +1,9 @@
+{
+  "name": "chunk_extractor",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Reads a Jupyter notebook and a notebook map, then extracts findings into structured chunk files — one per chunk — covering preprocessing, descriptive stats, relationships, and severity-tagged business signals, for use by downstream writing agents",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

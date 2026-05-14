@@ -1,0 +1,9 @@
+{
+  "name": "reviewer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Audits a document against a provided rubric or criteria list — produces per-criterion verdicts (MET/PARTIAL/MISSING), formatting check results, and a prioritised fix list; does not rewrite content",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

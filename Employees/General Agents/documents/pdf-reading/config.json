@@ -1,0 +1,9 @@
+{
+  "name": "pdf-reading",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Extracts and interprets content from PDF files — text, tables, images, and scanned pages via OCR",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

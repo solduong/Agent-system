@@ -1,0 +1,10 @@
+{
+  "name": "m9_notebook_assembler",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 8: Assembles a single reproducible Jupyter notebook that runs the entire GLM pipeline end-to-end",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 40
+}

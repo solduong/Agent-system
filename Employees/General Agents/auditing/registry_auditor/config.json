@@ -1,0 +1,9 @@
+{
+  "name": "registry_auditor",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Audits all agent roles and descriptions against the current workflow and suggests updates",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read"]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "notebook_mapper",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Reads a Jupyter notebook and produces a structured notebook map — overview (shape, variables, response variable) and a tagged section index table — for navigation by downstream agents, particularly chunk_extractor",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

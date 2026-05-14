@@ -1,0 +1,9 @@
+{
+  "name": "product-knowledge",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Retrieves, synthesises, and documents knowledge about a product — features, use cases, limitations, and FAQs from provided source material",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

@@ -1,0 +1,506 @@
+name: generated_task_workflow
+description: "Unified ML Notebook pipeline — merges EDA, cleaning, and 8 model families into one master Jupyter notebook with ≥25 model variants, leaderboard, holdout predictions, and reproducibility checklist."
+version: "1.0"
+
+steps:
+  # ── Phase 0 + Phase 1: Globals & Data Pipeline ──────────────────────────
+  - name: phase0_phase1
+    agent: ml_notebook_coder
+    task: >
+      Phase 0 + Phase 1 — Globals & Data Pipeline.
+
+      Create the notebook skeleton as a valid .ipynb file.
+
+      SECTION 0 cells: all imports, the GLOBAL CONSTANTS block verbatim from
+      §Global Constants in UNIFICATION_INSTRUCTIONS.txt, OUTPUTS directory
+      creation, seed broadcast.
+
+      PHASE 1 cells: copy every cell from 'Clean + Interact.ipynb' in order
+      and apply these fixes:
+        §1.1 — Replace Cell 2 path block with `_JOIN_DIR = NOTEBOOK_DIR`,
+               `OUTPUT_DIR = str(OUT_EDA)`.
+        §1.2 — Raw data load from `RAW_TRAIN_FILE`.
+        §1.3 — Row cleaning cells 9–16 verbatim.
+        §1.4 — Column cleaning cells 19–65 verbatim.
+        §1.5 — Interaction engineering cells 91–105 verbatim.
+        §1.6 — Save with `CLEANED_CSV` path + assertions.
+        §1.7 — 5 EDA visualisation cells saving to `OUT_EDA`.
+
+      Reference files:
+        - UNIFICATION_INSTRUCTIONS.txt (master spec)
+        - Source: Shared Modelling/Unified NOTEBOOK/Clean + Interact.ipynb
+        - Strategic_path/modelling_strategy_v2.txt
+
+      Output format: .ipynb cells (JSON).
+    input_keys: []
+    output_key: phase0_phase1_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 2: Shared Infrastructure ──────────────────────────────────────
+  - name: phase2
+    agent: ml_notebook_coder
+    task: >
+      Phase 2 — Shared Infrastructure.
+
+      Write all Phase 2 cells (new code, no source notebook):
+        §2.1 — Load canonical CSV + assert shape.
+        §2.2 — Feature column definitions: CONTINUOUS_COLS, CAT_COLS,
+                CAT_COLS_NOCITY, IX_COLS.
+        §2.3 — Two shared preprocessors via make_preprocessor()
+                (pre_full with city, pre_nocity without).
+        §2.4 — Stratified 70/30 train/val split + fit both preprocessors
+                on train only + assert counts.
+        §2.5 — Shared StratifiedKFold `SKF`.
+        §2.6 — Five shared utility functions (tune_threshold, evaluate_model,
+                save_threshold_plot, save_confusion_matrix, save_roc_pr) —
+                copy verbatim from spec.
+        §2.7 — Master accumulators: ALL_RESULTS, ALL_PROBAS, ALL_PIPELINES.
+
+      Use the phase0_phase1_cells artifact for variable/import context.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §2.1–§2.7.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase0_phase1_cells
+    output_key: phase2_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3A: Logistic Regression (3 variants) ─────────────────────────
+  - name: phase3a_logistic_regression
+    agent: ml_notebook_coder
+    task: >
+      Task 3A — Logistic Regression (3 variants).
+
+      Read source: Shared Modelling/Unified NOTEBOOK/Logistics.ipynb.
+
+      Apply all fixes:
+        - Remove wrong data load (Kaden_cardinality_cleaned.csv).
+        - Remove internal ColumnTransformer / train_test_split.
+        - Remove manual C-sweep loop and evaluate() function.
+        - Remove baseline LR fitting block.
+
+      Write cells for 3 variants using pre_nocity:
+        (1) LR_L2 — Pipeline with lbfgs, GridSearchCV 5×C × 3×class_weight
+            = 15 configs.
+        (2) LR_L1 — Pipeline with saga+L1, same grid.
+        (3) LR_L2_SMOTE — ImbPipeline with SMOTE, 3×C × 2×class_weight
+            = 6 configs.
+
+      Each variant: define grid → search → top-5 CV table → threshold tune
+      on val → evaluate → append to ALL_RESULTS/PROBAS/PIPELINES → save
+      plots + joblib + metrics CSV to OUT_LR.
+
+      Keep coefficient interpretation cell → save lr_coefficients.csv.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3A.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3a_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3B: GLM (load pre-computed) ──────────────────────────────────
+  - name: phase3b_glm
+    agent: ml_notebook_coder
+    task: >
+      Task 3B — GLM (load pre-computed).
+
+      Write cells:
+        Step 1 — Try-load glm_outputs_run2/models/macro_f1_winner.pkl
+                  via joblib.
+        Step 2 — Generate val probs.
+        Steps 6–11 — From template with MODEL_NAME='GLM_winner',
+                      cv_f1 from preferred_model.json.
+        Copy diagnostic plots from
+        glm_outputs_run2/diagnostics/macro_f1_winner/ to OUT_GLM.
+
+      Include full fallback block: if pkl fails, re-run minimal sm.Logit
+      with pre_nocity + steps 6–11 as 'GLM_logit' with cv_f1=0.0.
+
+      GLM outputs path: Shared Modelling/glm/glm_outputs_run2/
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3B.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3b_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3C: GAM ──────────────────────────────────────────────────────
+  - name: phase3c_gam
+    agent: ml_notebook_coder
+    task: >
+      Task 3C — GAM.
+
+      Read source: Shared Modelling/Unified NOTEBOOK/GAM_notebook.ipynb.
+
+      Apply fixes:
+        - Remove wrong data file load.
+        - Remove internal train_test_split / StratifiedKFold.
+        - Fix continuous_cols to include Once_Ask1/2/3, hour, month
+          (were missing).
+        - Fix model/metrics save paths → OUT_GAM.
+        - Replace internal CV fold with SKF (Cell 16: replace
+          CV = StratifiedKFold(...) with CV = SKF).
+
+      Keep:
+        - PyGAMClassifier wrapper (Cells 11–12).
+        - Hyperparameter grid (20 configs, Cell 14).
+        - CV loop (Cell 16 — use SKF).
+        - Threshold tuning (Cells 21–22 → call shared tune_threshold()).
+        - Partial dependence plots (Cell 30 → save to OUT_GAM).
+
+      Generate 2 variants for leaderboard: GAM_best + GAM_second
+      (runner-up).
+
+      Save GAM_cv_results.csv + GAM_partial_dependence.png.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3C.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3c_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3D: XGBoost ──────────────────────────────────────────────────
+  - name: phase3d_xgboost
+    agent: ml_notebook_coder
+    task: >
+      Task 3D — XGBoost.
+
+      Read source: Shared Modelling/Unified NOTEBOOK/unicef_fast_boosting_models_cv.ipynb.
+
+      Apply fixes:
+        - Remove data load / internal OHE / train_test_split.
+        - Set MAX_ROWS_FOR_CV = None (was 30K).
+        - Set CV_FOLDS = N_CV_FOLDS.
+        - Replace OOF threshold tuning with tune_threshold(y_prob, y_val).
+        - Replace make_one_hot_encoder() with pre_full.transform().
+
+      Write Pipeline with pre_full + XGBClassifier, RandomizedSearchCV
+      n_iter=N_ITER_RAND over grid:
+        3×depth × 2×subsample × 2×colsample × 3×lambda × 3×alpha
+        × 4×scale_pos_weight.
+
+      Generate 3 variants for leaderboard: XGB_best + 2 runner-ups
+      from CV results.
+
+      Save feature importance plot to OUT_XGB.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3D.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3d_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3E: CatBoost ─────────────────────────────────────────────────
+  - name: phase3e_catboost
+    agent: ml_notebook_coder
+    task: >
+      Task 3E — CatBoost.
+
+      Same source as 3D: Shared Modelling/Unified NOTEBOOK/unicef_fast_boosting_models_cv.ipynb.
+      Apply same 4 fixes as Task 3D.
+
+      Write Pipeline with pre_full + CatBoostClassifier(verbose=0),
+      RandomizedSearchCV over grid:
+        3×depth × 3×l2_leaf_reg × 2×subsample × 2×colsample
+        × 3×class_weights.
+
+      CatBoost receives OHE matrix (no native cat features per
+      strategy §5).
+
+      Generate 3 variants: CAT_best + 2 runner-ups.
+      Save to OUT_CAT.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3E.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3e_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3F: LightGBM ─────────────────────────────────────────────────
+  - name: phase3f_lightgbm
+    agent: ml_notebook_coder
+    task: >
+      Task 3F — LightGBM.
+
+      Same source as 3D: Shared Modelling/Unified NOTEBOOK/unicef_fast_boosting_models_cv.ipynb.
+      Apply same 4 fixes as Task 3D.
+
+      Write Pipeline with pre_full + LGBMClassifier(verbose=-1),
+      RandomizedSearchCV over grid:
+        3×num_leaves × 3×max_depth × 3×lambda_l2 × 3×lambda_l1
+        × 3×class_weight.
+
+      Generate 3 variants: LGB_best + 2 runner-ups.
+      Save to OUT_LGB.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3F.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3f_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3G: Random Forest ─────────────────────────────────────────────
+  - name: phase3g_random_forest
+    agent: ml_notebook_coder
+    task: >
+      Task 3G — Random Forest.
+
+      Read source: Shared Modelling/Unified NOTEBOOK/RandomForest_v1.py.
+
+      Convert from .py to notebook cells:
+        - Remove matplotlib.use("Agg").
+        - Remove if __name__ == '__main__': wrapper.
+        - Remove internal data load + preprocessor.
+
+      Write Pipeline with pre_full + RandomForestClassifier,
+      RandomizedSearchCV n_iter=N_ITER_RAND over grid:
+        4×max_depth × 3×min_samples_split × 3×min_samples_leaf
+        × 2×max_features × 3×class_weight.
+
+      Keep SHAP importance block → save RF_shap_importance.png to OUT_RF.
+
+      Generate 3 variants: RF_best + 2 runner-ups.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3G.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3g_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 3H: Neural Network (2 variants) ──────────────────────────────
+  - name: phase3h_neural_network
+    agent: ml_notebook_coder
+    task: >
+      Task 3H — Neural Network (2 variants).
+
+      Read source: Shared Modelling/Unified NOTEBOOK/Final_nn_modeling_sklearn_v3.ipynb.
+
+      Apply fixes:
+        - Remove Cell 3 hardcoded path block.
+        - Remove internal data / split / preprocessor.
+        - Replace all os.path.join(OUTPUT_DIR, ...) with OUT_NN / ...
+        - Replace manual class-weight sweep (Cells 12–14) with
+          RandomizedSearchCV.
+
+      Write 2 variants:
+        (A) NN_best — Pipeline with pre_nocity +
+            MLPClassifier(max_iter=1000, early_stopping=True,
+            n_iter_no_change=10), grid 4×hidden_layers × 4×alpha × 2×lr.
+        (B) NN_SMOTE_best — ImbPipeline with SMOTE + same grid.
+
+      Keep probability distribution plot → OUT_NN/NN_prob_distribution.png,
+      threshold overlay → OUT_NN/NN_threshold_overlay.png.
+
+      Generate 3 total variants for leaderboard (2 best + 1 runner-up).
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Task 3H.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase2_cells
+    output_key: phase3h_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 4: Model Comparison ───────────────────────────────────────────
+  - name: phase4_model_comparison
+    agent: ml_notebook_coder
+    task: >
+      Phase 4 — Model Comparison.
+
+      Write cells (new code):
+        §4.1 — Build results_df leaderboard from ALL_RESULTS, sort by
+                val_macro_f1 desc, save model_leaderboard.csv to OUT_COMP.
+        §4.2 — Select top 25 → top25_models.csv.
+        §4.3 — Five comparison visualisations:
+                comparison_bar_f1.png (with naive baseline 0.44),
+                comparison_cv_vs_val.png (scatter),
+                comparison_class_f1.png (grouped bar),
+                comparison_threshold_top5.png,
+                comparison_roc_overlay.png.
+        §4.4 — Best model statement print block.
+
+      Verify model count ≥25 from expected family contributions:
+        LR:3, GLM:1, GAM:2, XGB:3, CAT:3, LGB:3, RF:3, NN:3 = 21
+        + class-weight variants to reach 25.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §4.1–§4.4.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase3a_cells
+      - phase3b_cells
+      - phase3c_cells
+      - phase3d_cells
+      - phase3e_cells
+      - phase3f_cells
+      - phase3g_cells
+      - phase3h_cells
+    output_key: phase4_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 5: Holdout Prediction ─────────────────────────────────────────
+  - name: phase5_holdout_prediction
+    agent: ml_notebook_coder
+    task: >
+      Phase 5 — Holdout Prediction.
+
+      Write cells (new code with functions reused from Phase 1):
+        §5.1 — Load holdout raw + template, assert counts.
+        §5.2 — Extract training constants for imputation:
+                CAMPAIGN_MODES_ONCE, CAMPAIGN_MODES_MONTHLY,
+                GLOBAL_ONCE_MODE, GLOBAL_MONTHLY_MODE from training df.
+        §5.3 — Define clean_and_engineer() replicating full Clean+Interact
+                pipeline using training constants + hardcoded
+                IX_DEFINITIONS (30 pairs).
+        §5.4 — Apply to holdout + assert (3674, 61).
+        §5.5 — Predict with all top-25 models from ALL_PIPELINES using
+                locked thresholds → holdout_all_top25_predictions.csv.
+        §5.6 — Fill submission template with best model →
+                UNICEF2026S1_clf_holdout_oneoff_template_FILLED.csv.
+        §5.7 — Five mandatory sanity checks (all must pass).
+
+      Use phase0_phase1_cells for function definitions to reuse.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §5.1–§5.7.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase0_phase1_cells
+      - phase4_cells
+    output_key: phase5_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 6: Reproducibility Checklist ──────────────────────────────────
+  - name: phase6_reproducibility
+    agent: ml_notebook_coder
+    task: >
+      Phase 6 — Reproducibility Checklist.
+
+      Write final notebook cell: 16-item boolean checklist dict:
+        1.  Seed broadcast
+        2.  Canonical CSV shape
+        3.  Train/val counts
+        4.  Single data load
+        5.  Shared preprocessors
+        6.  No absolute paths
+        7.  CV scoring
+        8.  Val untouched during CV
+        9.  Threshold on val not OOF
+        10. Results ≥25
+        11. Holdout uses training constants
+        12. Holdout shape
+        13. Submission rows
+        14. Int predictions
+        15. ID alignment
+        16. All outputs in OUTPUTS/
+
+      Print ✓/✗ per item. Assert all True.
+      Print Python / sklearn / numpy / pandas versions.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §Phase 6.
+      Output format: .ipynb cells (JSON).
+    input_keys:
+      - phase5_cells
+    output_key: phase6_cells
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  # ── Phase 7: Assemble Unified Notebook ──────────────────────────────────
+  - name: phase7_assembly
+    agent: ml_notebook_coder
+    task: >
+      Assemble Unified Notebook.
+
+      Combine all phase cell artifacts (phase0_phase1 through phase6)
+      into a single ordered .ipynb file.
+
+      Steps:
+        - Merge imports into the first code cell (§instruction 8).
+        - Ensure markdown section headers are present between phases.
+        - Verify cell ordering matches the instruction sequence:
+          Section 0 → Phase 1 (§1.1–1.7) → Phase 2 (§2.1–2.7) →
+          Phase 3 (Tasks 3A–3H in order: LR, GLM, GAM, XGB, CatBoost,
+          LightGBM, RF, NN) → Phase 4 (§4.1–4.4) →
+          Phase 5 (§5.1–5.7) → Phase 6.
+        - Set kernel metadata to Python 3.
+        - Save as Unified_Notebook.ipynb in the Unified NOTEBOOK directory.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt §instruction 8 (import merge).
+      Output format: complete .ipynb file.
+    input_keys:
+      - phase0_phase1_cells
+      - phase2_cells
+      - phase3a_cells
+      - phase3b_cells
+      - phase3c_cells
+      - phase3d_cells
+      - phase3e_cells
+      - phase3f_cells
+      - phase3g_cells
+      - phase3h_cells
+      - phase4_cells
+      - phase5_cells
+      - phase6_cells
+    output_key: unified_notebook
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  # ── Phase 8: QA Audit ──────────────────────────────────────────────────
+  - name: phase8_qa_audit
+    agent: reviewer
+    task: >
+      QA Audit of Unified_Notebook.ipynb.
+
+      Audit the assembled notebook against two criteria lists:
+
+      (1) The OUTPUT FILE MANIFEST from UNIFICATION_INSTRUCTIONS.txt
+          §COMPLETE OUTPUT FILE MANIFEST — verify every expected file
+          is produced by a cell in the notebook.
+
+      (2) The 16-item REPRODUCIBILITY CHECKLIST from Phase 6 — verify
+          each check is structurally satisfiable by the preceding code.
+
+      Produce per-criterion MET / PARTIAL / MISSING verdicts and a
+      prioritised fix list.
+
+      Flag any: missing cells, wrong output paths, undefined variables,
+      or import gaps.
+
+      Reference: UNIFICATION_INSTRUCTIONS.txt (full spec).
+      Output format: structured audit report.
+    input_keys:
+      - unified_notebook
+    output_key: qa_report
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300

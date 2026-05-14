@@ -1,0 +1,9 @@
+{
+  "name": "performance_analyzer",
+  "model": "claude-sonnet-4-5",
+  "system_prompt": "system_prompt.md",
+  "description": "Analyses run history metrics and quality scores to identify which agents have degraded and produces ranked improvement targets for the self-improvement pipeline",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

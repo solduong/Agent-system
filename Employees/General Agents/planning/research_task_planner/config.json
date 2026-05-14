@@ -1,0 +1,9 @@
+{
+  "name": "research_task_planner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Converts a research goal into a phased, sequenced task plan with named deliverables, dependency maps, effort estimates, and risk flags — for academic or structured research projects",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

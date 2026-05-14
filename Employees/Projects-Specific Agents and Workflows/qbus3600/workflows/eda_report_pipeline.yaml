@@ -1,0 +1,109 @@
+name: eda_report_pipeline
+description: "Full EDA report pipeline for QBUS3600 — UNICEF campaign conversion analysis"
+version: "1.0"
+
+# Execution order:
+# Phase 1 (sequential): A1 → A2
+# Phase 2 (parallel):   B and C (C waits for B)
+# Phase 3 (parallel):   D, E, F
+# Phase 4 (sequential): G → H → I → J
+
+steps:
+  - name: map_notebook
+    agent: a1_structural_mapper
+    task: "Map the notebook structure. Input: Leakage_Univariate.ipynb. Output: notebook_map.md."
+    input_keys: []
+    output_key: notebook_map
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: extract_chunks
+    agent: a2_chunk_extractor
+    task: "Extract findings into four chunk files using the notebook map. Output: chunk_preprocessing.md, chunk_descriptive.md, chunk_relationships.md, chunk_business_signals.md."
+    input_keys: [notebook_map]
+    output_key: chunks
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: build_references
+    agent: b_researcher
+    task: "Build a reference library of 15–25 sources. Primary input: chunk_relationships.md. Secondary: chunk_business_signals.md. Output: references.md."
+    input_keys: [chunks]
+    output_key: references
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: plan_report
+    agent: c_report_planner
+    task: "Produce the content brief allocating word counts, table/figure budgets, and depth levels for all sections within 15 pages. Inputs: all chunk files + references.md. Output: report_brief.md."
+    input_keys: [chunks, references]
+    output_key: report_brief
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: make_tables
+    agent: d_table_maker
+    task: "Produce all publication-ready tables within the budget specified in report_brief.md. Output: tables.md."
+    input_keys: [chunks, report_brief]
+    output_key: tables
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: write_eda_sections
+    agent: e_eda_writer
+    task: "Write Sections 4 (Descriptive Statistics) and 5 (Exploring Potential Relationships). Inputs: report_brief.md, chunk_descriptive.md, chunk_relationships.md, tables.md, references.md. Output: section_4_5.md."
+    input_keys: [chunks, report_brief, tables, references]
+    output_key: section_4_5
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: write_technical_sections
+    agent: f_preprocessing_writer
+    task: "Write Sections 2 (Problem Description) and 3 (Data Preprocessing). Inputs: report_brief.md, chunk_preprocessing.md, chunk_descriptive.md, tables.md. Output: section_2_3.md."
+    input_keys: [chunks, report_brief, tables]
+    output_key: section_2_3
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: write_business_sections
+    agent: g_business_writer
+    task: "Write Section 1 (Executive Briefing, max 1 page) and Section 6 (Business Links). Inputs: report_brief.md, tables.md, section_4_5.md, chunk_business_signals.md, references.md. Output: section_1_6.md."
+    input_keys: [report_brief, tables, section_4_5, chunks, references]
+    output_key: section_1_6
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: assemble_draft
+    agent: h_assembler
+    task: "Assemble all sections in order (1→2→3→4→5→6→References) into report_draft.md. Insert tables at reference points. Check consistency and page budget."
+    input_keys: [section_2_3, section_4_5, section_1_6, tables, report_brief]
+    output_key: report_draft
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: check_rubric
+    agent: i_rubric_checker
+    task: "Audit report_draft.md against the QBUS3600 rubric (Executive Briefing 20pts, Problem Description 10pts, Preprocessing 10pts, Descriptive Stats 15pts, Relationships 15pts, Business Links 10pts). Output: rubric_check.md."
+    input_keys: [report_draft]
+    output_key: rubric_check
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: finalise_references
+    agent: j_reference_integrator
+    task: "Resolve all [UNSUPPORTED — needs citation] flags, verify citation consistency, compile APA 7th reference list. Outputs: report_final.md, citation_log.md."
+    input_keys: [report_draft, references, rubric_check, section_1_6]
+    output_key: report_final
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300

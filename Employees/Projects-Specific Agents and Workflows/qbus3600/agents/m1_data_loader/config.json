@@ -1,0 +1,10 @@
+{
+  "name": "m1_data_loader",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 1: Loads cleaned data, validates schema, performs stratified train/test split, produces a data manifest",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 20
+}

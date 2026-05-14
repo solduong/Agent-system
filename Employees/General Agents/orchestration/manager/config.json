@@ -1,0 +1,9 @@
+{
+  "name": "manager",
+  "model": "claude-sonnet-4-5",
+  "system_prompt": "system_prompt.md",
+  "description": "Ad-hoc workflow coordinator: decides which agents to call and in what order, manages live handoffs, and passes completed plans to workflow_planner for YAML formalisation — use when no predefined workflow YAML exists for the task",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read"]
+}

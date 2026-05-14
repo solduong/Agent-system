@@ -1,0 +1,109 @@
+name: glm_modeling_pipeline
+description: "Full GLM modeling pipeline for QBUS3600 — UNICEF donor conversion. Logistic GLM grid (link × regularization × interactions), statsmodels for inference + sklearn for CV, diagnostics, model comparison, reproducible notebook. No report writing."
+version: "1.0"
+
+# Execution order:
+# Phase 0 (sequential): M0 (plan)
+# Phase 1 (sequential): M1 → M2 → M3
+# Phase 2 (parallel):   M4 and M5
+# Phase 3 (sequential): M6 → M7 → M8 → M9
+
+steps:
+  - name: plan_modeling
+    agent: m0_modeling_planner
+    task: "Inspect the cleaned dataset and write the modeling plan. Inputs: data_path, response_variable=converted, output_dir. Output: modeling_plan.md covering candidate model grid (logit/probit/cloglog × none/L1/L2/ElasticNet × interaction sets), validation strategy, evaluation metrics, diagnostics checklist, success criteria."
+    input_keys: []
+    output_key: modeling_plan
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: load_and_split
+    agent: m1_data_loader
+    task: "Load cleaned data from data_path, validate schema against modeling_plan.md, stratified 70/30/0 split with seed=0 (train.parquet + val.parquet; no test.parquet — external test set provided separately). Outputs: data/{train,val,test}.parquet, data/data_manifest.json."
+    input_keys: [modeling_plan]
+    output_key: data_manifest
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: engineer_features
+    agent: m2_feature_engineer
+    task: "Build the design matrix. Fit transformers on train only (one-hot/target encoding, log1p of skewed positives, standardization, planned interactions). Outputs: data/X_{train,val,test}.parquet, data/y_*.parquet, data/feature_pipeline.pkl, data/feature_manifest.json."
+    input_keys: [modeling_plan, data_manifest]
+    output_key: feature_manifest
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: specify_model_grid
+    agent: m3_model_specifier
+    task: "Generate the candidate model grid spec from the modeling plan and feature manifest. Cap total fits at 24. Output: model_grid.json."
+    input_keys: [modeling_plan, feature_manifest]
+    output_key: model_grid
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: fit_statsmodels
+    agent: m4_statsmodels_fitter
+    task: "Fit every statsmodels entry in model_grid.json on TRAIN. Use HC3 robust SE for unregularized; fit_regularized for elastic net variants. Persist .pkl, coefficient CSVs, predictions, and results/statsmodels_summary.csv."
+    input_keys: [model_grid, feature_manifest]
+    output_key: statsmodels_results
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 1200
+
+  - name: fit_sklearn_cv
+    agent: m5_sklearn_cv_fitter
+    task: "Fit every sklearn entry in model_grid.json with RepeatedStratifiedKFold (5 folds × 3 repeats) and GridSearchCV on roc_auc. Capture neg_log_loss, brier, average_precision. Persist .pkl, cv_results CSVs, predictions, and results/sklearn_summary.csv."
+    input_keys: [model_grid, feature_manifest]
+    output_key: sklearn_results
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 1800
+
+  - name: run_diagnostics
+    agent: m6_diagnostics
+    task: "Produce VIF, residual, leverage, Cook's, ROC, PR, calibration, Hosmer-Lemeshow, threshold and bootstrap-coefficient diagnostics for every fitted model. Save numbers + figures under diagnostics/<model_id>/."
+    input_keys: [statsmodels_results, sklearn_results]
+    output_key: diagnostics
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 1500
+
+  - name: optimize_macro_f1
+    agent: m10_macro_f1_optimizer
+    task: "Sweep class_weight ∈ [null, {0:2,1:1}, {0:3,1:1}, 'balanced'] × C ∈ logspace(-3,2,8) on full+interactions feature set. Tune threshold per cell on val for macro F1. Output: results/macro_f1/macro_f1_grid.csv, tradeoff_per_strategy.png, regularization_path.png, preferred_macro_f1.json, models/macro_f1_winner.pkl."
+    input_keys: [feature_manifest, statsmodels_results, sklearn_results, diagnostics]
+    output_key: macro_f1_results
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 1200
+
+  - name: compare_models
+    agent: m7_model_comparator
+    task: "Merge statsmodels_summary.csv, sklearn_summary.csv, and per-model diagnostic_summary.json into one master comparison. Rank by val AUC, then test AUC, then BIC. Apply success criteria from the plan; recommend ONE preferred model. Outputs: results/model_comparison.csv, model_comparison.md, preferred_model.json."
+    input_keys: [statsmodels_results, sklearn_results, diagnostics, modeling_plan]
+    output_key: comparison
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: organise_artifacts
+    agent: m8_artifact_manager
+    task: "Verify the output tree, compute SHA-256 checksums for every artefact into artifacts_manifest.json, capture environment.json (Python and library versions), and write a README.md at output_dir."
+    input_keys: [data_manifest, model_grid, comparison]
+    output_key: artifacts
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: assemble_notebook
+    agent: m9_notebook_assembler
+    task: "Generate notebook/glm_modeling_pipeline.ipynb that runs the full pipeline end-to-end with deterministic seeds. Sections: setup, load, split, features, grid, statsmodels fits, sklearn CV fits, diagnostics on preferred model, comparison, export. No report prose."
+    input_keys: [modeling_plan, model_grid, comparison, artifacts]
+    output_key: notebook
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 900

@@ -1,0 +1,9 @@
+{
+  "name": "research_question_refiner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Refines a broad thesis topic into 2–3 specific, scoped research questions — each with rationale, implied methodology, and data/access requirements — plus a recommendation and flags for uncertain dependencies",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

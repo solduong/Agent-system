@@ -1,0 +1,9 @@
+{
+  "name": "report_generator",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Assembles pre-written section files into a single cohesive report — handles sequential table numbering, heading hierarchy, title page, and formatting consistency without rewriting content",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

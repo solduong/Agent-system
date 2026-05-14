@@ -1,0 +1,9 @@
+name: t
+description: "test"
+version: "1.0"
+steps:
+  - name: s1
+    agent: manager
+    task: "do thing"
+    input_keys: []
+    output_key: out1

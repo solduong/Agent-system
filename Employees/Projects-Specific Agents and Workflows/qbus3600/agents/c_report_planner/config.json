@@ -1,0 +1,9 @@
+{
+  "name": "c_report_planner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Report Planner: Allocates word counts, table/figure budgets, and depth levels across all sections within the 15-page limit",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

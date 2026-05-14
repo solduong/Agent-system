@@ -1,0 +1,31 @@
+{
+  "id": "qbus3600",
+  "name": "QBUS3600 EDA Report — UNICEF Campaign Conversion",
+  "description": "QBUS3600 main project on UNICEF donor/campaign conversion data — supports an EDA report pipeline and a GLM modeling pipeline.",
+  "version": "1.1",
+  "workflow": "glm_modeling_pipeline",
+  "available_workflows": [
+    "eda_report_pipeline",
+    "glm_modeling_pipeline",
+    "nn_modeling_pipeline"
+  ],
+  "extends": [],
+  "context": {
+    "notebook": "Leakage_Univariate.ipynb",
+    "output_dir": "/Users/ADMIN/Documents/UNI SYDNEY/5. SYD SPRING 2026/QBUS3600/Main project",
+    "modeling_output_dir": "/Users/ADMIN/Documents/UNI SYDNEY/5. SYD SPRING 2026/QBUS3600/Main project/modeling",
+    "response_variable": "converted",
+    "page_limit": 15,
+    "citation_style": "APA 7th",
+    "modeling": {
+      "task_type": "binary_classification",
+      "default_seed": 0,
+      "split_ratios": {"train": 0.70, "val": 0.30, "test": 0.00},
+      "cv": {"folds": 5, "repeats": 3},
+      "engines": ["statsmodels", "sklearn"],
+      "links": ["logit", "probit", "cloglog"],
+      "regularization": ["none", "l1", "l2", "elasticnet"],
+      "max_grid_size": 24
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "g_business_writer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Business Writer: Writes Section 1 (Executive Briefing, ≤1 page) and Section 6 (Business Links) with claim-to-source linking",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

@@ -1,0 +1,9 @@
+{
+  "name": "data_analyzer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Examines structured datasets and produces a findings document covering distributions, variable relationships, statistical insights, and data quality flags — given a dataset, analysis goal, response variable, and focal variables",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

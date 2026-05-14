@@ -1,0 +1,9 @@
+{
+  "name": "table_maker",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Converts raw extracted findings into numbered, captioned, publication-ready markdown tables within a specified budget",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

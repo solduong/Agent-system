@@ -1,0 +1,10 @@
+{
+  "name": "m3_model_specifier",
+  "model": "claude-haiku-4-5-20251001",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 3: Generates the candidate model grid spec (link × regularization × interactions) as a JSON specification",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write"],
+  "max_turns": 8
+}

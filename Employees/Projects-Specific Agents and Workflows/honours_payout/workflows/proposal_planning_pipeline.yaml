@@ -1,0 +1,44 @@
+name: proposal_planning_pipeline
+description: "Honours-thesis proposal planning pipeline for the payout-policy project. Three sequential planning agents: refine the research question, build the task plan, then produce the proposal content brief. No writing agents — this workflow stops at the brief."
+version: "1.0"
+
+# Execution order:
+# Phase 1 (sequential): research_question_refiner → research_task_planner → report_planner
+#
+# Outputs are written into the Honour Research folder:
+#   01_rq_refiner.md
+#   02_task_planner.md
+#   03_report_planner.md
+# A separate consolidation step (e.g., docx skill) can merge them into proposal_plan_pipeline.docx.
+#
+# Project-specific agent overrides apply automatically when project_id="honours_payout"
+# is passed to AgentRegistry — the project versions of these three agents take priority
+# over the general agents of the same name.
+
+steps:
+  - name: refine_research_question
+    agent: research_question_refiner
+    task: "Sharpen the broad payout-policy idea into three candidate RQs (theoretical / empirical-identification / hybrid) and recommend one. Inputs: Researchese idea.docx + reading_list.docx in the Honour Research folder. Output: 01_rq_refiner.md."
+    input_keys: []
+    output_key: refined_rq
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: plan_research_tasks
+    agent: research_task_planner
+    task: "Convert the recommended RQ into a four-phase, dependency-mapped task plan keyed to the USYD honours timeline (proposal due mid June 2026, thesis due early November 2026). Inputs: 01_rq_refiner.md + reading_list.docx (suggested reading order). Output: 02_task_planner.md."
+    input_keys: [refined_rq]
+    output_key: task_plan
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: build_proposal_brief
+    agent: report_planner
+    task: "Produce the strict content brief allocating word counts, table/figure budgets, and depth levels for the eight locked proposal sections within 12 pages / ~4,000 words. Inputs: 01_rq_refiner.md, 02_task_planner.md, reading_list.docx. Output: 03_report_planner.md."
+    input_keys: [refined_rq, task_plan]
+    output_key: proposal_brief
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300

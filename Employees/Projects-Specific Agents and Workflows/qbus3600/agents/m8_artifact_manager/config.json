@@ -1,0 +1,10 @@
+{
+  "name": "m8_artifact_manager",
+  "model": "claude-haiku-4-5-20251001",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 7: Organises and indexes all model artefacts into a tidy outputs tree with a manifest and reproducibility metadata",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash", "Glob"],
+  "max_turns": 20
+}

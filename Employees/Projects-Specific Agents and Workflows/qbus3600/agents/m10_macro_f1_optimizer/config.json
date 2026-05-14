@@ -1,0 +1,10 @@
+{
+  "name": "m10_macro_f1_optimizer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Modeling Phase 5b: Re-tunes the existing fitted feature set for macro F1 across class-weight strategies and regularization grid; produces train-vs-test macro F1 trade-off plots and selects an overfit-aware winner",
+  "version": "1.1",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"],
+  "max_turns": 60
+}

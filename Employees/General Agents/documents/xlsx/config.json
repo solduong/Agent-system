@@ -1,0 +1,9 @@
+{
+  "name": "xlsx",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Creates and edits Excel spreadsheets (.xlsx) — builds workbooks with formulas, charts, pivot tables, and formatted data from provided inputs",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

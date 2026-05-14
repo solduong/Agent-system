@@ -1,0 +1,9 @@
+{
+  "name": "pptx",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Creates and edits PowerPoint presentations (.pptx) — builds slide decks with structured layouts, speaker notes, and visual hierarchy from provided content",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

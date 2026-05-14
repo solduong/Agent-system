@@ -1,0 +1,9 @@
+{
+  "id": "project_id",
+  "name": "Project Name",
+  "description": "One-line description of what this project analyses or produces.",
+  "version": "1.0",
+  "workflow": "workflow_name",
+  "extends": [],
+  "context": {}
+}

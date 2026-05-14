@@ -1,0 +1,9 @@
+{
+  "name": "d_table_maker",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Table Maker: Produces numbered, captioned publication-ready markdown tables from extracted chunk data",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

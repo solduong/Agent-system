@@ -1,0 +1,9 @@
+{
+  "name": "business_insights_writer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Translates analytical findings into business language: produces an executive summary and a business insights section with claim-to-source linking and actionable recommendations",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

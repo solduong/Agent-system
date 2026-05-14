@@ -1,0 +1,9 @@
+{
+  "name": "f_preprocessing_writer",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Preprocessing Writer: Writes Sections 2 (Problem Description) and 3 (Data Preprocessing) with specific technical detail",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

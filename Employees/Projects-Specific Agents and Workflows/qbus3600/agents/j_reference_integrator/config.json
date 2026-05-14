@@ -1,0 +1,9 @@
+{
+  "name": "j_reference_integrator",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "QBUS3600 Reference Integrator: Resolves unsupported citation flags, verifies all in-text citations, and compiles the APA reference list",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}

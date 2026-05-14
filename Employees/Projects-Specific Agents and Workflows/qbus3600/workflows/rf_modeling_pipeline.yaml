@@ -1,0 +1,54 @@
+name: rf_modeling_pipeline
+description: "Random Forest classification pipeline for QBUS3600 — UNICEF donor conversion. Maximises macro F1 via RandomizedSearchCV (n_iter=50, f1_macro, StratifiedKFold-5) + per-candidate threshold tuning on validation. Produces feature importance, confusion matrices, threshold curve, and a reproducible notebook."
+version: "1.0"
+
+# Execution order (all sequential — each step feeds the next):
+# M1 (load + split) → M2 (feature engineering, no interactions) →
+# M11 (RF grid search + threshold tuning) →
+# M8 (artifact manager) → M12 (notebook assembler)
+
+steps:
+  - name: load_and_split
+    agent: m1_data_loader
+    task: "Load cleaned data from data_path, validate schema, stratified 70/30/0 split with seed=0 (train.parquet + val.parquet; no test.parquet — external test set provided separately). Response variable: TARGET_purchased. Outputs: data/{train,val,test}.parquet, data/data_manifest.json."
+    input_keys: []
+    output_key: data_manifest
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: engineer_features
+    agent: m2_feature_engineer
+    task: "Build the design matrix for Random Forest — no interaction terms needed (RF captures non-linearities natively; skip the interactions section of any plan). Apply one-hot encoding to low-cardinality categoricals (≤10 levels) and target/leave-one-out encoding for high-cardinality. Apply log1p to heavily right-skewed positive numerics; standardise all numerics using train mean/std (harmless for RF, preserves pipeline compatibility). Drop near-zero variance and perfectly collinear columns. Outputs: data/X_{train,val,test}.parquet, data/y_*.parquet, data/feature_pipeline.pkl, data/feature_manifest.json."
+    input_keys: [data_manifest]
+    output_key: feature_manifest
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 600
+
+  - name: fit_rf
+    agent: m11_rf_classifier
+    task: "Fit Random Forest variants via RandomizedSearchCV (n_iter=50, scoring=f1_macro, cv=StratifiedKFold(5), random_state=0, n_jobs=-1). Sweep: n_estimators [100,200,300,500,750], max_depth [null,5,10,15,20,30], min_samples_split [2,5,10,20], min_samples_leaf [1,2,4,8], max_features [sqrt,log2,0.1,0.3,0.5], class_weight [null,balanced,balanced_subsample,{0:2,1:1},{0:3,1:1}]. For the top 5 candidates by CV macro F1, refit on TRAIN then tune decision threshold on VAL (np.linspace(0.05,0.95,91), maximise val macro F1). Pick overfit-aware winner: highest val macro F1 with gap_train_val_macro_f1 ≤ 0.03; fall back to highest val macro F1 if none qualify and set overfitting_flag=true. Inputs: data_dir=output_dir/data. Outputs: results/rf/cv_results.csv, results/rf/rf_grid.csv, results/rf/preferred_rf.json, results/rf/feature_importance.png, results/rf/confusion_matrices.png, results/rf/threshold_curve.png, models/rf_best.pkl, models/rf_best_params.json."
+    input_keys: [feature_manifest]
+    output_key: rf_results
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 3600
+
+  - name: organise_artifacts
+    agent: m8_artifact_manager
+    task: "Verify the RF output tree (data/, models/, results/, notebook/). Compute SHA-256 checksums for every .pkl, .parquet, .csv, .png artefact and write artifacts_manifest.json. Capture environment.json (Python + library versions). Write README.md at output_dir. Note: this is the RF pipeline — reference results/rf/preferred_rf.json as the preferred-model output (there is no model_grid.json or model_comparison.csv)."
+    input_keys: [data_manifest, rf_results]
+    output_key: artifacts
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 300
+
+  - name: assemble_notebook
+    agent: m12_rf_notebook_assembler
+    task: "Generate notebook/rf_modeling_pipeline.ipynb that runs the full RF pipeline end-to-end with deterministic seeds. Sections: setup, load+inspect, split, feature engineering, RF hyperparameter search, threshold tuning, feature importance, confusion matrices, final test evaluation, export. Cross-check live-computed val macro F1 against preferred_rf.json to 2 decimal places. Inputs: data_path, output_dir, data/data_manifest.json, data/feature_manifest.json, results/rf/preferred_rf.json."
+    input_keys: [feature_manifest, rf_results, artifacts]
+    output_key: notebook
+    parameters: {}
+    retry_count: 1
+    timeout_seconds: 900

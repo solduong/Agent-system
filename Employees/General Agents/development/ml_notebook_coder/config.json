@@ -1,0 +1,9 @@
+{
+  "name": "ml_notebook_coder",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Reads source Jupyter notebooks and Python scripts, then writes corrected and standards-compliant Python code cells for a unified notebook based on detailed phase-level specifications including bug fixes, grid definitions, and path corrections",
+  "version": "1.0",
+  "parameters": {},
+  "tools": ["Read", "Write", "Bash"]
+}

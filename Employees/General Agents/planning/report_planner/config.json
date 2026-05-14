@@ -1,0 +1,9 @@
+{
+  "name": "report_planner",
+  "model": "claude-opus-4-6",
+  "system_prompt": "system_prompt.md",
+  "description": "Produces a strict content brief in two modes: Mode A (analytical report) allocates word counts, table/figure budgets, and depth levels from chunk files and a reference library; Mode B (research proposal) maps research questions and a task plan to section allocations, arguments, and evidence requirements",
+  "version": "1.0",
+  "parameters": {},
+  "tools": []
+}
